@@ -41,4 +41,18 @@ class Habit extends HiveObject {
     final today = DateTime.now().toIso8601String().split('T')[0];
     return completedDates.contains(today);
   }
+
+  Habit copyWith({
+    String? name,
+    String? category,
+    List<String>? completedDates,
+  }) {
+    return Habit(
+        id: id,
+        name: name ?? this.name,
+        category: category ?? this.category,
+        completedDates: completedDates ?? this.completedDates,
+        createdAt: createdAt
+        );
+  }
 }
