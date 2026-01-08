@@ -5,20 +5,14 @@ import 'core/constants.dart';
 import 'features/habits/domain/habit_model.dart';
 
 void main() async {
-  // 1. Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Initialize Hive for Flutter
   await Hive.initFlutter();
 
-  // 3. Register the Type Adapter (This tells Hive how to read your Habit model)
-  // Note: HabitAdapter is generated automatically in the next step
   Hive.registerAdapter(HabitAdapter());
 
-  // 4. Open the Box (The actual storage file)
   await Hive.openBox<Habit>(AppConstants.habitBoxName);
 
-  // 5. Run the app wrapped in ProviderScope for Riverpod
   runApp(
     const ProviderScope(
       child: HabitFlowApp(),
