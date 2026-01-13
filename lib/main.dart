@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_flow/features/habits/presentation/screens/home_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants.dart';
 import 'features/habits/domain/habit_model.dart';
@@ -32,9 +33,7 @@ class HabitFlowApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: Center(child: Text('Step 2 Complete: Hive Initialized!')),
-      ),
+      home: const HomeScreen(),
     );
   }
 }

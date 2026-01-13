@@ -25,7 +25,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     state = [newHabit, ...state];
   }
 
-  Future<void> toogleHabit(String id) async {
+  Future<void> toggleHabit(String id) async {
     final today = DateTime.now().toIso8601String().split('T')[0];
     final habit = state.firstWhere((h) => h.id == id);
 
@@ -57,7 +57,6 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final dates = List<String>.from(habit.completedDates)
       ..sort((a, b) => b.compareTo(a));
     final today = DateTime.now();
-    final todayStr = today.toIso8601String().split('T')[0];
 
     final lastDate = DateTime.parse(dates.first);
     final difference = today.difference(lastDate).inDays;
