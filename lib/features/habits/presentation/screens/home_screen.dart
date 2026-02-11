@@ -2,22 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants.dart';
 import '../../providers/habit_provider.dart';
 import '../widgets/habit_card.dart';
-import '../widgets/add_habit_modal.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final habits = ref.watch(habitProvider);
+    final theme = Theme.of(context);
+    final habits = ref.watch(filteredHabitsProvider);
+    final allHabits = ref.watch(habitProvider);
+    final selectedCategory = ref.watch(selectedCategoryProvider);
     final today = DateFormat('EEEE, MMM d').format(DateTime.now());
     final todayStr = DateTime.now().toIso8601String().split('T')[0];
-    final doneToday = habits.where((h) => h.completedDates.contains(todayStr)).length;
-    
+
+    // Only count habits scheduled for today
+    final scheduledToday =
+        habits.where((h) => h.isScheduledForToday()).toList();
+    final doneToday =
+        scheduledToday.where((h) => h.completedDates.contains(todayStr)).length;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -36,19 +45,19 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               today.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF6366F1),
+                                color: theme.colorScheme.primary,
                                 letterSpacing: 1.5,
                               ),
                             ),
-                            const Text(
+                            Text(
                               'My Routine',
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF1E293B),
+                                color: theme.colorScheme.onSurface,
                                 letterSpacing: -1,
                               ),
                             ),
@@ -57,21 +66,68 @@ class HomeScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.cardColor,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade100),
+                            border: Border.all(color: theme.dividerColor),
                           ),
-                          child: const Icon(LucideIcons.trendingUp, color: Color(0xFF6366F1)),
+                          child: Icon(LucideIcons.trendingUp,
+                              color: theme.colorScheme.primary),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
-                        _buildStatTile('Today\'s Goal', '$doneToday/${habits.length}', const Color(0xFF10B981)),
+                        _buildStatTile(
+                          context,
+                          'Today\'s Goal',
+                          '$doneToday/${scheduledToday.length}',
+                          const Color(0xFF10B981),
+                        ),
                         const SizedBox(width: 12),
-                        _buildStatTile('Success Rate', habits.isEmpty ? '0%' : '${((doneToday/habits.length)*100).round()}%', const Color(0xFF6366F1)),
+                        _buildStatTile(
+                          context,
+                          'Success Rate',
+                          scheduledToday.isEmpty
+                              ? '0%'
+                              : '${((doneToday / scheduledToday.length) * 100).round()}%',
+                          const Color(0xFF6366F1),
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 20),
+                    // Category filter chips
+                    SizedBox(
+                      height: 40,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _buildFilterChip(
+                            context: context,
+                            label: 'All',
+                            isSelected: selectedCategory == null,
+                            onTap: () => ref
+                                .read(selectedCategoryProvider.notifier)
+                                .state = null,
+                            count: allHabits.length,
+                          ),
+                          ...AppConstants.categories.map((cat) {
+                            final count = allHabits
+                                .where((h) => h.category == cat.name)
+                                .length;
+                            return _buildFilterChip(
+                              context: context,
+                              label: cat.name,
+                              isSelected: selectedCategory == cat.name,
+                              onTap: () => ref
+                                  .read(selectedCategoryProvider.notifier)
+                                  .state = cat.name,
+                              color: cat.color,
+                              count: count,
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -79,101 +135,183 @@ class HomeScreen extends ConsumerWidget {
             ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: habits.isEmpty 
-                ? SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(LucideIcons.sparkles, size: 64, color: Colors.grey.shade200),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Your routine is empty',
-                            style: TextStyle(color: Colors.grey.shade400, fontWeight: FontWeight.w800),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final habit = habits[index];
-                        return Dismissible(
-                          key: Key(habit.id),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (direction) {
-                            ref.read(habitProvider.notifier).deleteHabit(habit.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${habit.name} removed from routine'),
-                                behavior: SnackBarBehavior.floating,
-                                backgroundColor: const Color(0xFF1E293B),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            );
-                          },
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 24),
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade400,
-                              borderRadius: BorderRadius.circular(28),
+              sliver: habits.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(LucideIcons.sparkles,
+                                size: 64,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.15)),
+                            const SizedBox(height: 16),
+                            Text(
+                              selectedCategory != null
+                                  ? 'No $selectedCategory habits yet'
+                                  : 'Your routine is empty',
+                              style: TextStyle(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.4),
+                                  fontWeight: FontWeight.w800),
                             ),
-                            child: const Icon(LucideIcons.trash2, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    )
+                  : SliverReorderableList(
+                      itemBuilder: (context, index) {
+                        final habit = habits[index];
+                        return ReorderableDragStartListener(
+                          key: Key(habit.id),
+                          index: index,
+                          child: Dismissible(
+                            key: Key('dismiss_${habit.id}'),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (direction) {
+                              ref
+                                  .read(habitProvider.notifier)
+                                  .deleteHabit(habit.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      '${habit.name} removed from routine'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: const Color(0xFF1E293B),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                              );
+                            },
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 24),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade400,
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                              child: const Icon(LucideIcons.trash2,
+                                  color: Colors.white),
+                            ),
+                            child: HabitCard(habit: habit),
                           ),
-                          child: HabitCard(habit: habit),
                         );
                       },
-                      childCount: habits.length,
+                      itemCount: habits.length,
+                      onReorder: (oldIndex, newIndex) {
+                        if (newIndex > oldIndex) newIndex--;
+                        ref
+                            .read(habitProvider.notifier)
+                            .reorderHabits(oldIndex, newIndex);
+                      },
                     ),
-                  ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddHabitModal(context),
-        backgroundColor: const Color(0xFF1E293B),
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        label: const Text('Add New Habit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-        icon: const Icon(LucideIcons.plus, color: Colors.white),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    Color? color,
+    required int count,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (color ?? theme.colorScheme.primary).withOpacity(0.1)
+                : theme.cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? (color ?? theme.colorScheme.primary).withOpacity(0.3)
+                  : theme.dividerColor,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected
+                      ? (color ?? theme.colorScheme.primary)
+                      : theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (color ?? theme.colorScheme.primary).withOpacity(0.15)
+                      : theme.colorScheme.onSurface.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected
+                        ? (color ?? theme.colorScheme.primary)
+                        : theme.colorScheme.onSurface.withOpacity(0.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildStatTile(String label, String value, Color color) {
+  Widget _buildStatTile(
+      BuildContext context, String label, String value, Color color) {
+    final theme = Theme.of(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+            Text(label.toUpperCase(),
+                style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    letterSpacing: 1)),
             const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color, letterSpacing: -1)),
+            Text(value,
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: -1)),
           ],
         ),
       ),
-    );
-  }
-
-  void _showAddHabitModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AddHabitModal(),
     );
   }
 }

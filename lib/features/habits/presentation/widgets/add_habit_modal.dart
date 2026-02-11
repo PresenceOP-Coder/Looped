@@ -1,105 +1,347 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../core/constants.dart';
+import '../../domain/habit_model.dart';
 import '../../providers/habit_provider.dart';
 
 class AddHabitModal extends ConsumerStatefulWidget {
-  const AddHabitModal({super.key});
+  final Habit? existingHabit;
+
+  const AddHabitModal({super.key, this.existingHabit});
 
   @override
   ConsumerState<AddHabitModal> createState() => _AddHabitModalState();
 }
 
 class _AddHabitModalState extends ConsumerState<AddHabitModal> {
-  final _controller = TextEditingController();
-  String _selectedCategory = 'Growth';
-  final List<String> _categories = ['Health', 'Growth', 'Mindset', 'Work'];
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  late String _selectedCategory;
+  late String _frequency;
+  late List<int> _targetDays;
+  String? _reminderTime;
+
+  bool get _isEditing => widget.existingHabit != null;
+
+  static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.existingHabit?.name ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.existingHabit?.description ?? '');
+    _selectedCategory = widget.existingHabit?.category ?? 'Growth';
+    _frequency = widget.existingHabit?.frequency ?? 'daily';
+    _targetDays = List<int>.from(widget.existingHabit?.targetDays ?? []);
+    _reminderTime = widget.existingHabit?.reminderTime;
+  }
+
   @override
   void dispose() {
-    _controller.dispose();
+    _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
   void _submit() {
-    if (_controller.text.trim().isEmpty) return;
-    ref.read(habitProvider.notifier).addHabit(
-          _controller.text.trim(),
-          _selectedCategory,
-        );
+    if (_nameController.text.trim().isEmpty) return;
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim().isEmpty
+        ? null
+        : _descriptionController.text.trim();
+
+    final effectiveTargetDays =
+        (_frequency == 'custom' || _frequency == 'weekly') &&
+                _targetDays.isNotEmpty
+            ? _targetDays
+            : null;
+
+    if (_isEditing) {
+      ref.read(habitProvider.notifier).updateHabit(
+            widget.existingHabit!.id,
+            name: name,
+            category: _selectedCategory,
+            description: description,
+            frequency: _frequency,
+            targetDays: effectiveTargetDays,
+            clearTargetDays: effectiveTargetDays == null,
+            reminderTime: _reminderTime,
+            clearReminderTime: _reminderTime == null,
+          );
+    } else {
+      ref.read(habitProvider.notifier).addHabit(
+            name,
+            _selectedCategory,
+            description: description,
+            frequency: _frequency,
+            targetDays: effectiveTargetDays,
+            reminderTime: _reminderTime,
+          );
+    }
     Navigator.pop(context);
+  }
+
+  Future<void> _pickReminderTime() async {
+    final initial = _reminderTime != null
+        ? TimeOfDay(
+            hour: int.parse(_reminderTime!.split(':')[0]),
+            minute: int.parse(_reminderTime!.split(':')[1]),
+          )
+        : const TimeOfDay(hour: 8, minute: 0);
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _reminderTime =
+            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'New Habit',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _isEditing ? 'Edit Habit' : 'New Habit',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(LucideIcons.x,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                  )
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _nameController,
+                autofocus: !_isEditing,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Read 20 pages',
+                  hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                  border: InputBorder.none,
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.x),
-                )
-              ],
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                  hintText: 'e.g., Read 20 pages', border: InputBorder.none),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(
-              height: 24,
-            ),
-            Wrap(
-              spacing: 8,
-              children: _categories
-                  .map((cat) => ChoiceChip(
-                        label: Text(cat),
-                        selected: _selectedCategory == cat,
-                        onSelected: (val) =>
-                            setState(() => _selectedCategory = cat),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(
-              height: 32,
-            ),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                ),
-                child: const Text(
-                  'Create Habit',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            )
-          ],
+              const SizedBox(height: 8),
+              TextField(
+                controller: _descriptionController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Description (optional)',
+                  hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.3),
+                      fontSize: 14),
+                  border: InputBorder.none,
+                ),
+                style:
+                    TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
+              ),
+
+              // ─── Category chips ───
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                children: AppConstants.categoryNames
+                    .map((cat) => ChoiceChip(
+                          label: Text(cat),
+                          selected: _selectedCategory == cat,
+                          onSelected: (val) =>
+                              setState(() => _selectedCategory = cat),
+                        ))
+                    .toList(),
+              ),
+
+              // ─── Frequency selector ───
+              const SizedBox(height: 20),
+              Text(
+                'FREQUENCY',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: ['daily', 'weekly', 'custom'].map((f) {
+                  final isSelected = _frequency == f;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(
+                        f[0].toUpperCase() + f.substring(1),
+                        style: TextStyle(
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          _frequency = f;
+                          if (f == 'daily') _targetDays.clear();
+                        });
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              // ─── Day picker (for weekly/custom) ───
+              if (_frequency == 'weekly' || _frequency == 'custom') ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  children: List.generate(7, (i) {
+                    final day = i + 1; // 1=Mon..7=Sun
+                    final isSelected = _targetDays.contains(day);
+                    return FilterChip(
+                      label: Text(
+                        _dayLabels[i],
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _targetDays.add(day);
+                          } else {
+                            _targetDays.remove(day);
+                          }
+                          _targetDays.sort();
+                        });
+                      },
+                    );
+                  }),
+                ),
+              ],
+
+              // ─── Reminder time ───
+              const SizedBox(height: 20),
+              Text(
+                'REMINDER',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickReminderTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: theme.scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: theme.dividerColor),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.bell,
+                                size: 18,
+                                color: _reminderTime != null
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurface
+                                        .withOpacity(0.3)),
+                            const SizedBox(width: 10),
+                            Text(
+                              _reminderTime != null
+                                  ? 'Remind at $_reminderTime'
+                                  : 'Set reminder (optional)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: _reminderTime != null
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: _reminderTime != null
+                                    ? theme.colorScheme.onSurface
+                                    : theme.colorScheme.onSurface
+                                        .withOpacity(0.3),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_reminderTime != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => setState(() => _reminderTime = null),
+                      icon: Icon(LucideIcons.x,
+                          size: 18,
+                          color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                    ),
+                  ],
+                ],
+              ),
+
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                  ),
+                  child: Text(
+                    _isEditing ? 'Save Changes' : 'Create Habit',
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
