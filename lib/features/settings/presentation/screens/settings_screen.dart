@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/constants.dart';
 import '../../../../core/notification_service.dart';
+import '../../../../core/alarm_service.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../../habits/providers/habit_provider.dart';
@@ -21,6 +22,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -54,7 +56,7 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
 
-            // ─── Appearance ───
+            // ─── appearence ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -105,7 +107,7 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── Data ───
+            // ─── data ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -143,14 +145,14 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── Notifications ───
+            // ─── alarm permisions ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionTitle('NOTIFICATIONS', subtitleColor),
+                    _sectionTitle('ALARM PERMISSIONS', subtitleColor),
                     const SizedBox(height: 12),
                     _settingsCard(
                       cardColor: cardColor,
@@ -158,10 +160,26 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         _actionTile(
                           context: context,
-                          icon: LucideIcons.bellOff,
-                          label: 'Cancel All Reminders',
-                          subtitle: 'Remove all scheduled notifications',
-                          onTap: () => _cancelAllReminders(context),
+                          icon: LucideIcons.batteryCharging,
+                          label: 'Disable Battery Restrictions',
+                          subtitle: 'Required for alarms to work reliably',
+                          onTap: () => _requestBatteryOptimization(context),
+                        ),
+                        Divider(height: 1, color: borderColor),
+                        _actionTile(
+                          context: context,
+                          icon: LucideIcons.settings,
+                          label: 'Open App Settings',
+                          subtitle: 'Manually configure alarm permissions',
+                          onTap: () => _openAppSettings(context),
+                        ),
+                        Divider(height: 1, color: borderColor),
+                        _actionTile(
+                          context: context,
+                          icon: LucideIcons.info,
+                          label: 'Check Alarm Status',
+                          subtitle: 'View current permission status',
+                          onTap: () => _checkAlarmStatus(context),
                         ),
                       ],
                     ),
@@ -172,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── About ───
+            // ─── about ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -424,18 +442,173 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _cancelAllReminders(BuildContext context) async {
-    await NotificationService().cancelAll();
+  void _requestBatteryOptimization(BuildContext context) async {
+    try {
+      final result = await AlarmService().requestBatteryOptimizationExemption();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result
+                ? '✅ Battery restrictions disabled'
+                : '⚠️ Battery restrictions still enabled'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor:
+                result ? const Color(0xFF10B981) : Colors.orange.shade700,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    }
+  }
+
+  void _openAppSettings(BuildContext context) async {
+    // show guide dialog first
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('All reminders cancelled'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF1E293B),
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('App Settings Guide',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          content: const Text(
+            'To ensure alarms work reliably:\n\n'
+            '1. Go to "Battery" → Disable "Battery optimization"\n'
+            '2. Go to "Alarms & reminders" → Enable\n'
+            '3. Under "App info" → Set to "No restrictions"\n\n'
+            'These settings may vary by device.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx); // Close dialog first
+                try {
+                  await AlarmService().openAppSettings();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ Error opening settings: $e'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.red.shade400,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Go'),
+            ),
+          ],
         ),
       );
     }
+  }
+
+  void _checkAlarmStatus(BuildContext context) async {
+    try {
+      final status = await AlarmService().getAlarmPermissionsStatus();
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: const Text('Alarm Permissions Status',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _statusRow(
+                  'Battery Restrictions',
+                  status['batteryOptimizationDisabled'] ?? false,
+                ),
+                const SizedBox(height: 12),
+                _statusRow(
+                  'Exact Alarm Permission',
+                  status['canScheduleExactAlarms'] ?? false,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  status.values.every((v) => v)
+                      ? '✅ All permissions configured correctly!'
+                      : '⚠️ Some permissions need attention. Tap "Disable Battery Restrictions" or "Open App Settings" to fix.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: status.values.every((v) => v)
+                        ? Colors.green.shade700
+                        : Colors.orange.shade700,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error checking status: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _statusRow(String label, bool isGranted) {
+    return Row(
+      children: [
+        Icon(
+          isGranted ? LucideIcons.checkCircle : LucideIcons.xCircle,
+          size: 20,
+          color: isGranted ? Colors.green.shade600 : Colors.red.shade600,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+        Text(
+          isGranted ? 'Enabled' : 'Disabled',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isGranted ? Colors.green.shade600 : Colors.red.shade600,
+          ),
+        ),
+      ],
+    );
   }
 }

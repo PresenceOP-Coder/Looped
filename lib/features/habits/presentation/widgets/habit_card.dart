@@ -48,7 +48,7 @@ class HabitCard extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Drag handle
+              // drag handle
               Icon(
                 LucideIcons.gripVertical,
                 size: 16,
@@ -56,7 +56,7 @@ class HabitCard extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
 
-              // Checkmark Button
+              // checkmark buttion
               GestureDetector(
                 onTap: () =>
                     ref.read(habitProvider.notifier).toggleHabit(habit.id),

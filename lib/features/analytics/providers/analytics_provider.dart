@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../habits/providers/habit_provider.dart';
 
-/// Analytics data model for quick stat cards
+/// analytics data model for quick stat cards
 class AnalyticsStats {
   final int totalHabits;
   final int totalCompletions;
@@ -22,7 +22,7 @@ class AnalyticsStats {
   });
 }
 
-/// Weekly completions: how many habits completed each day for the last 7 days
+/// weakly completions: how many habits completd each day for last 7 days
 class DayCompletion {
   final DateTime date;
   final int count;
@@ -35,7 +35,7 @@ class DayCompletion {
   });
 }
 
-/// Category breakdown for donut chart
+/// categorie breakdown for donut chart
 class CategoryStat {
   final String name;
   final Color color;
@@ -52,7 +52,7 @@ class CategoryStat {
   });
 }
 
-/// Streak info for leaderboard
+/// streak info for lederboard
 class HabitStreak {
   final String habitName;
   final String category;
@@ -67,7 +67,7 @@ class HabitStreak {
   });
 }
 
-/// Day-of-week average for "best day" chart
+/// day-of-weak average for "best day" chart
 class DayOfWeekStat {
   final String day;
   final double avgCompletions;
@@ -75,7 +75,7 @@ class DayOfWeekStat {
   const DayOfWeekStat({required this.day, required this.avgCompletions});
 }
 
-// ─── Providers ────────────────────────────────────────────────
+// ─── providers ────────────────────────────────────────────────
 
 final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
   final habits = ref.watch(habitProvider);
@@ -91,11 +91,11 @@ final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
     );
   }
 
-  // Total completions
+  // total complations
   final totalCompletions =
       habits.fold<int>(0, (sum, h) => sum + h.completedDates.length);
 
-  // Perfect days: days where ALL habits were completed
+  // perfect days: days where all habits were completd
   final allDates = <String>{};
   for (final h in habits) {
     allDates.addAll(h.completedDates);
@@ -107,7 +107,7 @@ final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
     if (allDone) perfectDays++;
   }
 
-  // Longest streak across all habits
+  // longest streak accross all habits
   int longestStreak = 0;
   String? mostConsistentHabit;
   for (final h in habits) {
@@ -206,7 +206,7 @@ final dayOfWeekStatsProvider = Provider<List<DayOfWeekStat>>((ref) {
     }
   }
 
-  // Calculate weeks active to get averages
+  // calculate weaks active to get averages
   if (habits.isEmpty) {
     return dayNames
         .asMap()
@@ -229,13 +229,13 @@ final dayOfWeekStatsProvider = Provider<List<DayOfWeekStat>>((ref) {
   });
 });
 
-/// Heatmap data: date → completion count for the last 3 months
+/// heatmap data: date → compleation count for last 3 months
 final heatmapDataProvider = Provider<Map<String, int>>((ref) {
   final habits = ref.watch(habitProvider);
   final now = DateTime.now();
   final Map<String, int> heatmap = {};
 
-  // Last 90 days
+  // last 90 days
   for (int i = 0; i < 90; i++) {
     final date = now.subtract(Duration(days: 89 - i));
     final dateStr = date.toIso8601String().split('T')[0];

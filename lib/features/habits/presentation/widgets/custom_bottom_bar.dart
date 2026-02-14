@@ -104,7 +104,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
-        // Bar background
+        // bar backgroud
         Container(
           padding: EdgeInsets.only(bottom: bottomPadding + 12, top: 8),
           decoration: BoxDecoration(
@@ -120,15 +120,15 @@ class _CustomBottomBarState extends State<CustomBottomBar>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Left items
+              // left items
               ...widget.items.sublist(0, (widget.items.length / 2).ceil()).map(
                     (item) => _buildTabItem(item, theme),
                   ),
 
-              // Spacer for center button
+              // spacer for center buttion
               const SizedBox(width: 72),
 
-              // Right items
+              // right items
               ...widget.items.sublist((widget.items.length / 2).ceil()).map(
                     (item) => _buildTabItem(item, theme),
                   ),
@@ -136,7 +136,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
           ),
         ),
 
-        // Center FAB — protruding above bar
+        // center fab — protruding abov bar
         Positioned(
           top: -22,
           child: GestureDetector(
@@ -238,7 +238,7 @@ class _MenuOverlay extends StatelessWidget {
 
     return Stack(
       children: [
-        // Full-screen dismiss area
+        // full-screen dismis area
         GestureDetector(
           onTap: onDismiss,
           child: FadeTransition(
@@ -249,7 +249,7 @@ class _MenuOverlay extends StatelessWidget {
           ),
         ),
 
-        // Popup menu — single pill containing both options
+        // popup menu — single pill containg both options
         Positioned(
           bottom: bottomPadding + 90,
           left: (screenWidth - 56) / 2,
@@ -272,7 +272,7 @@ class _MenuOverlay extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Add button
+                  // add buttion
                   GestureDetector(
                     onTap: onAddHabit,
                     behavior: HitTestBehavior.opaque,
@@ -282,13 +282,13 @@ class _MenuOverlay extends StatelessWidget {
                           Icon(LucideIcons.plus, color: Colors.white, size: 22),
                     ),
                   ),
-                  // Divider
+                  // divider
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(horizontal: 12),
                     color: Colors.white.withOpacity(0.2),
                   ),
-                  // Stats button
+                  // stats buttion
                   GestureDetector(
                     onTap: onAnalytics,
                     behavior: HitTestBehavior.opaque,

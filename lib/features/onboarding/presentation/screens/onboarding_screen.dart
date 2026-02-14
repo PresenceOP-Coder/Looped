@@ -62,10 +62,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Column(
           children: [
-            // Skip button
+            // skip buttion
             Align(
               alignment: Alignment.topRight,
               child: Padding(
@@ -83,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Pages
+            // pages
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -93,7 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Bottom controls
+            // botom controls
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
               child: Row(

@@ -25,6 +25,7 @@ class HabitDetailScreen extends ConsumerWidget {
     if (habit == null) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -38,7 +39,7 @@ class HabitDetailScreen extends ConsumerWidget {
     final bestStreak = ref.read(habitProvider.notifier).getBestStreak(habit);
     final totalCompletions = habit.completedDates.length;
 
-    // Build frequency label
+    // build frequencey label
     String? frequencyLabel;
     if (habit.frequency != 'daily') {
       if (habit.targetDays != null && habit.targetDays!.isNotEmpty) {
@@ -53,11 +54,12 @@ class HabitDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // App Bar
+            // app bar
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -101,7 +103,7 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // Header
+            // header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -199,6 +201,24 @@ class HabitDetailScreen extends ConsumerWidget {
                         ],
                       ),
                     ],
+                    if (habit.deadlineTime != null) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(LucideIcons.alarmClock,
+                              size: 14, color: Colors.red.shade400),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Deadline alarm at ${habit.deadlineTime}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     if (habit.description != null &&
                         habit.description!.isNotEmpty) ...[
                       const SizedBox(height: 16),
@@ -216,7 +236,7 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // Stats Row
+            // stats row
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -250,7 +270,7 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // Focus Timer
+            // focus timer
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -261,7 +281,7 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // Calendar Title
+            // calendar title
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -370,7 +390,7 @@ class HabitDetailScreen extends ConsumerWidget {
   }
 }
 
-// ─── Focus Timer Widget ───
+// ─── focus timer widget ───
 class _FocusTimer extends ConsumerStatefulWidget {
   final String habitId;
   final String habitName;
@@ -432,6 +452,10 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
   void _onTimerComplete() {
     // Auto-complete the habit for today
     ref.read(habitProvider.notifier).toggleHabit(widget.habitId);
+    // Reset timer so pressing play again doesn't immediately re-trigger
+    setState(() {
+      _remainingSeconds = _selectedMinutes * 60;
+    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -483,7 +507,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
           ),
           const SizedBox(height: 20),
 
-          // Circular progress + time
+          // circular progres + time
           SizedBox(
             width: 140,
             height: 140,
@@ -516,24 +540,43 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
           ),
           const SizedBox(height: 20),
 
-          // Preset buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // preset buttions
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: _presets.map((m) {
-              final isSelected = _selectedMinutes == m && !_isRunning;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Text('${m}m'),
-                  selected: isSelected,
-                  onSelected: _isRunning ? null : (_) => _selectPreset(m),
+              final isSelected = _selectedMinutes == m;
+              return ChoiceChip(
+                label: Text(
+                  '${m}m',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: isSelected
+                        ? Colors.white
+                        : theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
+                selected: isSelected,
+                showCheckmark: false,
+                selectedColor: theme.colorScheme.primary,
+                backgroundColor: theme.scaffoldBackgroundColor,
+                side: BorderSide(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onSelected: _isRunning ? null : (_) => _selectPreset(m),
               );
             }).toList(),
           ),
           const SizedBox(height: 16),
 
-          // Controls
+          // controls
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -574,7 +617,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
   }
 }
 
-/// Monthly calendar heatmap showing completed days
+/// monthly calendar heatmap showing completd days
 class _CompletionCalendar extends StatefulWidget {
   final List<String> completedDates;
   final Color accentColor;

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_flow/core/notification_service.dart';
+import 'package:habit_flow/core/alarm_service.dart';
 import 'package:habit_flow/core/theme.dart';
 import 'package:habit_flow/core/theme_provider.dart';
 import 'package:habit_flow/features/habits/presentation/screens/app_shell.dart';
@@ -34,10 +35,23 @@ void main() async {
     await Hive.openBox<Habit>(AppConstants.habitBoxName);
   }
 
-  // Initialize notification service
+  // init notifcation service here
   await NotificationService().init();
 
-  // Check if onboarding has been completed
+  // init alarm servise for deadlines alarm
+  await AlarmService().init();
+
+  // request exact alarm permision and baterry optimiztion exemption
+  await AlarmService().requestExactAlarmPermission();
+
+  // check baterry optimiztion status
+  await AlarmService().isBatteryOptimizationDisabled();
+
+  // re-arm deadline alarms for new day
+  final habitBox = Hive.box<Habit>(AppConstants.habitBoxName);
+  await AlarmService().rescheduleAllDeadlineAlarms(habitBox.values.toList());
+
+  // check if onbording has been completd
   final prefs = await SharedPreferences.getInstance();
   final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
 

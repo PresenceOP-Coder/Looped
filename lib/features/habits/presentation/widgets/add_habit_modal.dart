@@ -21,6 +21,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
   late String _frequency;
   late List<int> _targetDays;
   String? _reminderTime;
+  String? _deadlineTime;
 
   bool get _isEditing => widget.existingHabit != null;
 
@@ -37,6 +38,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
     _frequency = widget.existingHabit?.frequency ?? 'daily';
     _targetDays = List<int>.from(widget.existingHabit?.targetDays ?? []);
     _reminderTime = widget.existingHabit?.reminderTime;
+    _deadlineTime = widget.existingHabit?.deadlineTime;
   }
 
   @override
@@ -70,6 +72,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
             clearTargetDays: effectiveTargetDays == null,
             reminderTime: _reminderTime,
             clearReminderTime: _reminderTime == null,
+            deadlineTime: _deadlineTime,
+            clearDeadlineTime: _deadlineTime == null,
           );
     } else {
       ref.read(habitProvider.notifier).addHabit(
@@ -79,6 +83,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
             frequency: _frequency,
             targetDays: effectiveTargetDays,
             reminderTime: _reminderTime,
+            deadlineTime: _deadlineTime,
           );
     }
     Navigator.pop(context);
@@ -105,10 +110,30 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
     }
   }
 
+  Future<void> _pickDeadlineTime() async {
+    final initial = _deadlineTime != null
+        ? TimeOfDay(
+            hour: int.parse(_deadlineTime!.split(':')[0]),
+            minute: int.parse(_deadlineTime!.split(':')[1]),
+          )
+        : const TimeOfDay(hour: 21, minute: 0);
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _deadlineTime =
+            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Container(
       decoration: BoxDecoration(
@@ -116,7 +141,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
       ),
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: bottomInset),
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
@@ -172,7 +196,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                     TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
               ),
 
-              // ─── Category chips ───
+              // ─── category chips ───
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -186,7 +210,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                     .toList(),
               ),
 
-              // ─── Frequency selector ───
+              // ─── frequencey selector ───
               const SizedBox(height: 20),
               Text(
                 'FREQUENCY',
@@ -223,7 +247,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 }).toList(),
               ),
 
-              // ─── Day picker (for weekly/custom) ───
+              // ─── day picker for weakly/custom ───
               if (_frequency == 'weekly' || _frequency == 'custom') ...[
                 const SizedBox(height: 12),
                 Wrap(
@@ -256,7 +280,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 ),
               ],
 
-              // ─── Reminder time ───
+              // ─── reminder time ───
               const SizedBox(height: 20),
               Text(
                 'REMINDER',
@@ -314,6 +338,78 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => setState(() => _reminderTime = null),
+                      icon: Icon(LucideIcons.x,
+                          size: 18,
+                          color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                    ),
+                  ],
+                ],
+              ),
+
+              // ─── deadline alarm time ───
+              const SizedBox(height: 20),
+              Text(
+                'DEADLINE ALARM',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _pickDeadlineTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: theme.scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _deadlineTime != null
+                                ? Colors.red.shade300
+                                : theme.dividerColor,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.alarmClock,
+                                size: 18,
+                                color: _deadlineTime != null
+                                    ? Colors.red.shade400
+                                    : theme.colorScheme.onSurface
+                                        .withOpacity(0.3)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _deadlineTime != null
+                                    ? 'Alarm at $_deadlineTime if not done'
+                                    : 'Set deadline alarm (optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: _deadlineTime != null
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: _deadlineTime != null
+                                      ? theme.colorScheme.onSurface
+                                      : theme.colorScheme.onSurface
+                                          .withOpacity(0.3),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_deadlineTime != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => setState(() => _deadlineTime = null),
                       icon: Icon(LucideIcons.x,
                           size: 18,
                           color: theme.colorScheme.onSurface.withOpacity(0.4)),

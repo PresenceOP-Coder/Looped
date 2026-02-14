@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../../core/alarm_service.dart';
 import '../../../core/constants.dart';
 import '../../../core/notification_service.dart';
 import '../domain/habit_model.dart';
@@ -8,10 +9,10 @@ final habitProvider = StateNotifierProvider<HabitNotifier, List<Habit>>((ref) {
   return HabitNotifier();
 });
 
-// Filter state: null = show all
+// filter state: null = show all
 final selectedCategoryProvider = StateProvider<String?>((ref) => null);
 
-// Filtered habits based on selected category
+// filterd habits based on selected categorie
 final filteredHabitsProvider = Provider<List<Habit>>((ref) {
   final habits = ref.watch(habitProvider);
   final selectedCategory = ref.watch(selectedCategoryProvider);
@@ -19,7 +20,7 @@ final filteredHabitsProvider = Provider<List<Habit>>((ref) {
   return habits.where((h) => h.category == selectedCategory).toList();
 });
 
-// Only habits scheduled for today
+// only habits scheduld for today
 final todayHabitsProvider = Provider<List<Habit>>((ref) {
   final habits = ref.watch(filteredHabitsProvider);
   return habits.where((h) => h.isScheduledForToday()).toList();
@@ -45,6 +46,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     String frequency = 'daily',
     List<int>? targetDays,
     String? reminderTime,
+    String? deadlineTime,
   }) async {
     final sortOrder = state.isEmpty ? 0 : state.last.sortOrder + 1;
     final newHabit = Habit.create(
@@ -55,16 +57,26 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       targetDays: targetDays,
       sortOrder: sortOrder,
       reminderTime: reminderTime,
+      deadlineTime: deadlineTime,
     );
     await _box.put(newHabit.id, newHabit);
     state = [...state, newHabit];
 
-    // Schedule reminder if set
+    // schedual reminder if set
     if (reminderTime != null) {
       await NotificationService().scheduleHabitReminder(
         habitId: newHabit.id,
         habitName: name,
         timeStr: reminderTime,
+      );
+    }
+
+    // schedual deadline alarm if set
+    if (deadlineTime != null) {
+      await AlarmService().scheduleDeadlineAlarm(
+        habitId: newHabit.id,
+        habitName: name,
+        timeStr: deadlineTime,
       );
     }
   }
@@ -79,6 +91,8 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     bool clearTargetDays = false,
     String? reminderTime,
     bool clearReminderTime = false,
+    String? deadlineTime,
+    bool clearDeadlineTime = false,
   }) async {
     final habit = state.firstWhere((h) => h.id == id);
     final updatedHabit = habit.copyWith(
@@ -90,6 +104,8 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       clearTargetDays: clearTargetDays,
       reminderTime: reminderTime,
       clearReminderTime: clearReminderTime,
+      deadlineTime: deadlineTime,
+      clearDeadlineTime: clearDeadlineTime,
     );
     await _box.put(id, updatedHabit);
     state = [
@@ -97,7 +113,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
         if (h.id == id) updatedHabit else h,
     ];
 
-    // Update notification
+    // update reminder notifcation
     if (clearReminderTime) {
       await NotificationService().cancelReminder(id);
     } else if (reminderTime != null) {
@@ -108,6 +124,21 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
         timeStr: reminderTime,
       );
     }
+
+    // update deadline alarm
+    if (clearDeadlineTime) {
+      await AlarmService().cancelDeadlineAlarm(id);
+    } else if (deadlineTime != null) {
+      await AlarmService().cancelDeadlineAlarm(id);
+      // only schedual if not completd today
+      if (!updatedHabit.isCompletedToday()) {
+        await AlarmService().scheduleDeadlineAlarm(
+          habitId: id,
+          habitName: updatedHabit.name,
+          timeStr: deadlineTime,
+        );
+      }
+    }
   }
 
   Future<void> toggleHabit(String id) async {
@@ -116,7 +147,8 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
 
     List<String> updatesDates = List.from(habit.completedDates);
 
-    if (updatesDates.contains(today)) {
+    final wasCompleted = updatesDates.contains(today);
+    if (wasCompleted) {
       updatesDates.remove(today);
     } else {
       updatesDates.add(today);
@@ -130,10 +162,36 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       for (final h in state)
         if (h.id == id) updatedHabit else h,
     ];
+
+    // handle deadline alarm based on compleation state
+    if (habit.deadlineTime != null) {
+      if (!wasCompleted) {
+        // just completd → cancel todays deadline alarm
+        await AlarmService().cancelDeadlineAlarm(id);
+      } else {
+        // un-completd → re-schedual deadline alarm if deadline hasnt passed
+        final parts = habit.deadlineTime!.split(':');
+        final deadlineToday = DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+        if (DateTime.now().isBefore(deadlineToday)) {
+          await AlarmService().scheduleDeadlineAlarm(
+            habitId: id,
+            habitName: habit.name,
+            timeStr: habit.deadlineTime!,
+          );
+        }
+      }
+    }
   }
 
   Future<void> deleteHabit(String id) async {
     await NotificationService().cancelReminder(id);
+    await AlarmService().cancelDeadlineAlarm(id);
     await _box.delete(id);
     state = state.where((h) => h.id != id).toList();
   }
@@ -143,7 +201,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final item = items.removeAt(oldIndex);
     items.insert(newIndex, item);
 
-    // Update sort order for all affected items
+    // update sort order for all affectd items
     final updated = <Habit>[];
     for (int i = 0; i < items.length; i++) {
       final h = items[i].copyWith(sortOrder: i);

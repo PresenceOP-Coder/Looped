@@ -54,10 +54,10 @@ class HeatmapCalendar extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Month labels
+          // month labels
           _buildMonthLabels(now, theme),
           const SizedBox(height: 6),
-          // Heatmap grid
+          // heatmap grid
           SizedBox(
             height: 7 * 14.0, // 7 rows × (10 cell + 4 gap)
             child: LayoutBuilder(
@@ -74,7 +74,7 @@ class HeatmapCalendar extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Legend
+          // legend
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -124,7 +124,7 @@ class HeatmapCalendar extends ConsumerWidget {
       final date = startDate.add(Duration(days: i));
       final monthStr = DateFormat('MMM').format(date);
       if (monthStr != lastMonth) {
-        // Approximate column position
+        // aproximate column postion
         final weekCol = i ~/ 7;
         months.add(_MonthLabel(label: monthStr, col: weekCol));
         lastMonth = monthStr;
@@ -175,7 +175,7 @@ class _HeatmapPainter extends CustomPainter {
     const gap = 4.0;
 
     final startDate = now.subtract(const Duration(days: 89));
-    // Align to start of the week (Monday)
+    // align to start of weak monday
     final startWeekday = startDate.weekday; // 1=Mon..7=Sun
 
     for (int i = 0; i < 90; i++) {

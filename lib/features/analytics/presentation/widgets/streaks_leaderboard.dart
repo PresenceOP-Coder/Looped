@@ -70,7 +70,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
-                    // Rank
+                    // rank
                     SizedBox(
                       width: 24,
                       child: Text(
@@ -84,7 +84,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Category icon
+                    // categorie icon
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -94,7 +94,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                       child: Icon(cat.icon, size: 16, color: cat.color),
                     ),
                     const SizedBox(width: 12),
-                    // Name + best
+                    // name + best
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +120,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    // Current streak
+                    // current streak
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),

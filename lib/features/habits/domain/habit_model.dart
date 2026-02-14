@@ -23,21 +23,26 @@ class Habit extends HiveObject {
   @HiveField(5)
   final String? description;
 
-  /// 'daily', 'weekly', or 'custom'
+  /// 'daily', 'weakly', or 'custom'
   @HiveField(6)
   final String frequency;
 
-  /// For custom frequency: list of weekday indices (1=Mon..7=Sun). Null for daily.
+  /// for custom frequencey: list of weekday indices 1=mon..7=sun. null for daily.
   @HiveField(7)
   final List<int>? targetDays;
 
-  /// Manual sort position (lower = higher in list)
+  /// manual sort postion lower = higher in list
   @HiveField(8)
   final int sortOrder;
 
-  /// Reminder time stored as 'HH:mm', null if no reminder
+  /// reminder time storied as 'hh:mm', null if no reminder
   @HiveField(9)
   final String? reminderTime;
+
+  /// deadline alarm time storied as 'hh:mm', null if no deadline.
+  /// if habit is not completd by this time, the phone alarm rings.
+  @HiveField(10)
+  final String? deadlineTime;
 
   Habit({
     required this.id,
@@ -50,6 +55,7 @@ class Habit extends HiveObject {
     this.targetDays,
     this.sortOrder = 0,
     this.reminderTime,
+    this.deadlineTime,
   });
 
   factory Habit.create({
@@ -60,6 +66,7 @@ class Habit extends HiveObject {
     List<int>? targetDays,
     int sortOrder = 0,
     String? reminderTime,
+    String? deadlineTime,
   }) {
     return Habit(
       id: const Uuid().v4(),
@@ -72,6 +79,7 @@ class Habit extends HiveObject {
       targetDays: targetDays,
       sortOrder: sortOrder,
       reminderTime: reminderTime,
+      deadlineTime: deadlineTime,
     );
   }
 
@@ -80,14 +88,14 @@ class Habit extends HiveObject {
     return completedDates.contains(today);
   }
 
-  /// Whether this habit is scheduled for today based on its frequency
+  /// whether this habit is scheduld for today based on its frequencey
   bool isScheduledForToday() {
     if (frequency == 'daily') return true;
     final weekday = DateTime.now().weekday; // 1=Mon..7=Sun
     if (frequency == 'custom' && targetDays != null) {
       return targetDays!.contains(weekday);
     }
-    // 'weekly' defaults to all days (treat as daily if no target days)
+    // 'weakly' defaults to all days treat as daily if no target days
     if (frequency == 'weekly' && targetDays != null) {
       return targetDays!.contains(weekday);
     }
@@ -103,8 +111,10 @@ class Habit extends HiveObject {
     List<int>? targetDays,
     int? sortOrder,
     String? reminderTime,
+    String? deadlineTime,
     bool clearReminderTime = false,
     bool clearTargetDays = false,
+    bool clearDeadlineTime = false,
   }) {
     return Habit(
       id: id,
@@ -118,6 +128,8 @@ class Habit extends HiveObject {
       sortOrder: sortOrder ?? this.sortOrder,
       reminderTime:
           clearReminderTime ? null : (reminderTime ?? this.reminderTime),
+      deadlineTime:
+          clearDeadlineTime ? null : (deadlineTime ?? this.deadlineTime),
     );
   }
 }
