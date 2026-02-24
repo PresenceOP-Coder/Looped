@@ -31,7 +31,6 @@ class AnalyticsScreen extends ConsumerWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // header
             SliverToBoxAdapter(
               child: Padding(
                 padding:
@@ -63,7 +62,6 @@ class AnalyticsScreen extends ConsumerWidget {
               ),
             ),
 
-            // stats cards
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
@@ -73,7 +71,6 @@ class AnalyticsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // weakly bar chart
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
@@ -83,7 +80,6 @@ class AnalyticsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // categorie donut + best day row
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -92,7 +88,6 @@ class AnalyticsScreen extends ConsumerWidget {
                   children: [
                     const Expanded(child: CategoryDonutChart()),
                     const SizedBox(width: 12),
-                    // best day mini card
                     SizedBox(
                       width: 100,
                       child: Container(
@@ -151,7 +146,6 @@ class AnalyticsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // heatmap
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
@@ -161,7 +155,6 @@ class AnalyticsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // day of weak chart
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -171,7 +164,6 @@ class AnalyticsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // streaks lederboard
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),

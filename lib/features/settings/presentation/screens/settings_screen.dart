@@ -56,7 +56,6 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
 
-            // ─── appearence ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -107,7 +106,6 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── data ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -145,7 +143,6 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── alarm permisions ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -190,7 +187,6 @@ class SettingsScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ─── about ───
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -475,7 +471,6 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _openAppSettings(BuildContext context) async {
-    // show guide dialog first
     if (context.mounted) {
       showDialog(
         context: context,

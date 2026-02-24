@@ -9,10 +9,8 @@ final habitProvider = StateNotifierProvider<HabitNotifier, List<Habit>>((ref) {
   return HabitNotifier();
 });
 
-// filter state: null = show all
 final selectedCategoryProvider = StateProvider<String?>((ref) => null);
 
-// filterd habits based on selected categorie
 final filteredHabitsProvider = Provider<List<Habit>>((ref) {
   final habits = ref.watch(habitProvider);
   final selectedCategory = ref.watch(selectedCategoryProvider);
@@ -20,7 +18,6 @@ final filteredHabitsProvider = Provider<List<Habit>>((ref) {
   return habits.where((h) => h.category == selectedCategory).toList();
 });
 
-// only habits scheduld for today
 final todayHabitsProvider = Provider<List<Habit>>((ref) {
   final habits = ref.watch(filteredHabitsProvider);
   return habits.where((h) => h.isScheduledForToday()).toList();
@@ -62,7 +59,6 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     await _box.put(newHabit.id, newHabit);
     state = [...state, newHabit];
 
-    // schedual reminder if set
     if (reminderTime != null) {
       await NotificationService().scheduleHabitReminder(
         habitId: newHabit.id,
@@ -71,7 +67,6 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       );
     }
 
-    // schedual deadline alarm if set
     if (deadlineTime != null) {
       await AlarmService().scheduleDeadlineAlarm(
         habitId: newHabit.id,
@@ -95,6 +90,15 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     bool clearDeadlineTime = false,
   }) async {
     final habit = state.firstWhere((h) => h.id == id);
+    final isCompletedToday = habit.isCompletedToday();
+    final effectiveReminderTime =
+        isCompletedToday ? habit.reminderTime : reminderTime;
+    final effectiveDeadlineTime =
+        isCompletedToday ? habit.deadlineTime : deadlineTime;
+    final effectiveClearReminderTime =
+        isCompletedToday ? false : clearReminderTime;
+    final effectiveClearDeadlineTime =
+        isCompletedToday ? false : clearDeadlineTime;
     final updatedHabit = habit.copyWith(
       name: name,
       category: category,
@@ -102,10 +106,10 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       frequency: frequency,
       targetDays: targetDays,
       clearTargetDays: clearTargetDays,
-      reminderTime: reminderTime,
-      clearReminderTime: clearReminderTime,
-      deadlineTime: deadlineTime,
-      clearDeadlineTime: clearDeadlineTime,
+      reminderTime: effectiveReminderTime,
+      clearReminderTime: effectiveClearReminderTime,
+      deadlineTime: effectiveDeadlineTime,
+      clearDeadlineTime: effectiveClearDeadlineTime,
     );
     await _box.put(id, updatedHabit);
     state = [
@@ -113,31 +117,28 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
         if (h.id == id) updatedHabit else h,
     ];
 
-    // update reminder notifcation
-    if (clearReminderTime) {
+    if (effectiveClearReminderTime) {
       await NotificationService().cancelReminder(id);
-    } else if (reminderTime != null) {
+    } else if (effectiveReminderTime != null && !isCompletedToday) {
       await NotificationService().cancelReminder(id);
       await NotificationService().scheduleHabitReminder(
         habitId: id,
         habitName: updatedHabit.name,
-        timeStr: reminderTime,
+        timeStr: effectiveReminderTime,
       );
     }
 
-    // update deadline alarm
-    if (clearDeadlineTime) {
+    // Always manage deadline alarm based on final state of the habit
+    if (effectiveClearDeadlineTime) {
       await AlarmService().cancelDeadlineAlarm(id);
-    } else if (deadlineTime != null) {
+    } else if (effectiveDeadlineTime != null && !isCompletedToday) {
+      // Cancel old alarm first, then reschedule
       await AlarmService().cancelDeadlineAlarm(id);
-      // only schedual if not completd today
-      if (!updatedHabit.isCompletedToday()) {
-        await AlarmService().scheduleDeadlineAlarm(
-          habitId: id,
-          habitName: updatedHabit.name,
-          timeStr: deadlineTime,
-        );
-      }
+      await AlarmService().scheduleDeadlineAlarm(
+        habitId: id,
+        habitName: updatedHabit.name,
+        timeStr: effectiveDeadlineTime,
+      );
     }
   }
 
@@ -163,28 +164,35 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
         if (h.id == id) updatedHabit else h,
     ];
 
-    // handle deadline alarm based on compleation state
+    // --- Manage deadline alarm ---
     if (habit.deadlineTime != null) {
       if (!wasCompleted) {
-        // just completd → cancel todays deadline alarm
+        // Was NOT completed → now IS completed → cancel alarm + stop any playing sound
         await AlarmService().cancelDeadlineAlarm(id);
+        AlarmService().stopAlarm();
       } else {
-        // un-completd → re-schedual deadline alarm if deadline hasnt passed
-        final parts = habit.deadlineTime!.split(':');
-        final deadlineToday = DateTime(
-          DateTime.now().year,
-          DateTime.now().month,
-          DateTime.now().day,
-          int.parse(parts[0]),
-          int.parse(parts[1]),
+        // Was completed → now UN-completed → always reschedule alarm
+        // If deadline hasn't passed today, schedule for today; otherwise tomorrow
+        await AlarmService().scheduleDeadlineAlarm(
+          habitId: id,
+          habitName: habit.name,
+          timeStr: habit.deadlineTime!,
         );
-        if (DateTime.now().isBefore(deadlineToday)) {
-          await AlarmService().scheduleDeadlineAlarm(
-            habitId: id,
-            habitName: habit.name,
-            timeStr: habit.deadlineTime!,
-          );
-        }
+      }
+    }
+
+    // --- Manage notification reminder ---
+    if (habit.reminderTime != null) {
+      if (!wasCompleted) {
+        // Completed → cancel today's reminder
+        await NotificationService().cancelReminder(id);
+      } else {
+        // Un-completed → reschedule reminder
+        await NotificationService().scheduleHabitReminder(
+          habitId: id,
+          habitName: habit.name,
+          timeStr: habit.reminderTime!,
+        );
       }
     }
   }
@@ -201,7 +209,6 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final item = items.removeAt(oldIndex);
     items.insert(newIndex, item);
 
-    // update sort order for all affectd items
     final updated = <Habit>[];
     for (int i = 0; i < items.length; i++) {
       final h = items[i].copyWith(sortOrder: i);

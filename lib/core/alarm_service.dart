@@ -2,6 +2,8 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,62 +12,61 @@ import 'package:permission_handler/permission_handler.dart' as permission;
 import '../features/habits/domain/habit_model.dart';
 import 'constants.dart';
 
-/// top-level callback function for android_alarm_manager_plus.
-/// this must be top-level function not class method for plugin to work.
-///
-/// this runs in seprate isolate when alarm fires, so we must re-init hive
-/// to check if habit was complted. if not completed, ring the alarm.
-@pragma('vm:entry-point')
-Future<void> alarmCallback(int id) async {
+/// Shows a high-priority heads-up notification for a habit alarm.
+/// Works in both foreground and background isolates.
+Future<void> _showAlarmNotification(
+    String habitName, int notificationId) async {
+  final plugin = FlutterLocalNotificationsPlugin();
+
+  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const settings = InitializationSettings(android: androidSettings);
+  await plugin.initialize(settings);
+
+  const androidDetails = AndroidNotificationDetails(
+    'habit_alarm_channel',
+    'Habit Alarms',
+    channelDescription: 'Alarm notifications for habit deadlines',
+    importance: Importance.max,
+    priority: Priority.max,
+    fullScreenIntent: true,
+    category: AndroidNotificationCategory.alarm,
+    visibility: NotificationVisibility.public,
+    playSound: true,
+    enableVibration: true,
+    ongoing: true,
+    autoCancel: false,
+    icon: '@mipmap/ic_launcher',
+    timeoutAfter: 60000, // auto-dismiss after 60 seconds
+  );
+
+  const details = NotificationDetails(android: androidDetails);
+
+  await plugin.show(
+    notificationId,
+    'HabitFlow Alarm',
+    'Deadline reached for: $habitName',
+    details,
+  );
+}
+
+/// Re-schedules the alarm for tomorrow. Only proceeds if no one else
+/// (e.g. the main isolate) has rescheduled/cancelled since this callback started.
+Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
   try {
-    // initalize hive to check habit compleation
-    await Hive.initFlutter();
-    if (!Hive.isAdapterRegistered(0)) {
-      Hive.registerAdapter(HabitAdapter());
-    }
-
-    late Box<Habit> box;
-    try {
-      box = Hive.box<Habit>(AppConstants.habitBoxName);
-    } catch (_) {
-      box = await Hive.openBox<Habit>(AppConstants.habitBoxName);
-    }
-
-    // read which habit this alarm is for
     final prefs = await SharedPreferences.getInstance();
-    final habitId = prefs.getString('alarm_habit_id_$id');
-
-    if (habitId != null) {
-      // check if habit was completd today
-      final today = DateTime.now().toIso8601String().split('T')[0];
-      final habit = box.values.cast<Habit?>().firstWhere(
-            (h) => h!.id == habitId,
-            orElse: () => null,
-          );
-
-      if (habit != null && !habit.completedDates.contains(today)) {
-        // not completd — ring the alarm!
-        final player = FlutterRingtonePlayer();
-        await player.playAlarm(
-          looping: true,
-          volume: 1.0,
-          asAlarm: true, // uses stream_alarm — rings even in silent/dnd
-        );
-
-        // auto-stop after 30 second
-        await Future.delayed(const Duration(seconds: 30));
-        await player.stop();
-      } else if (habit != null) {
-        // habit alredy completed today, skip alarm
-      } else {
-        // habit not found
-      }
+    // Force fresh read from disk (cross-isolate safety)
+    await prefs.reload();
+    final currentGen = prefs.getInt('alarm_gen_$id') ?? 0;
+    if (currentGen != expectedGen) {
+      debugPrint(
+          'Skipping reschedule for alarm $id: gen changed ($expectedGen → $currentGen)');
+      return;
     }
 
-    // re-schedual for tommorow since we use oneshot, not repeating
     final deadlineTime = prefs.getString('alarm_deadline_time_$id');
+    final habitId = prefs.getString('alarm_habit_id_$id');
     final habitName = prefs.getString('alarm_habit_name_$id');
-    // habitid alredy declared above
+
     if (deadlineTime != null && habitId != null && habitName != null) {
       final parts = deadlineTime.split(':');
       final hour = int.parse(parts[0]);
@@ -83,30 +84,71 @@ Future<void> alarmCallback(int id) async {
         alarmClock: true,
         rescheduleOnReboot: true,
       );
+      debugPrint('Rescheduled alarm $id for tomorrow: $nextAlarm');
     }
   } catch (e) {
-    // safety net: if anythng fails, still try to ring
-    try {
-      final player = FlutterRingtonePlayer();
-      await player.playAlarm(
-        looping: true,
-        volume: 1.0,
-        asAlarm: true,
-      );
-      await Future.delayed(const Duration(seconds: 30));
-      await player.stop();
-    } catch (emergencyError) {
-      // emergancy alarm also faild
-    }
+    debugPrint('Failed to reschedule alarm $id: $e');
   }
 }
 
-/// service to schedual real device alarm sounds when habit deadline is missd.
-///
-/// uses [AndroidAlarmManager] for exact-time schedulng works even when app is
-/// killd and [FlutterRingtonePlayer] to play the devices built-in alarm
-/// ringtone. alarm rings on alarm audio stream, so it sounds even in
-/// silent/dnd mode.
+@pragma('vm:entry-point')
+Future<void> alarmCallback(int id) async {
+  int? alarmGen;
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    await Hive.initFlutter();
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(HabitAdapter());
+    }
+
+    late Box<Habit> box;
+    try {
+      box = Hive.box<Habit>(AppConstants.habitBoxName);
+    } catch (_) {
+      box = await Hive.openBox<Habit>(AppConstants.habitBoxName);
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload(); // fresh read from disk
+    alarmGen = prefs.getInt('alarm_gen_$id') ?? 0;
+    final habitId = prefs.getString('alarm_habit_id_$id');
+    final habitName = prefs.getString('alarm_habit_name_$id') ?? 'Your Habit';
+
+    if (habitId != null) {
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      final habit = box.values.cast<Habit?>().firstWhere(
+            (h) => h!.id == habitId,
+            orElse: () => null,
+          );
+
+      if (habit != null) {
+        final notificationId = (habitId.hashCode.abs() % 1000000) + 1000000;
+        await _showAlarmNotification(habitName, notificationId);
+
+        try {
+          final player = FlutterRingtonePlayer();
+          await player.playAlarm(
+            looping: true,
+            volume: 1.0,
+            asAlarm: true,
+          );
+          await Future.delayed(const Duration(seconds: 30));
+          await player.stop();
+        } catch (_) {}
+
+        await Future.delayed(const Duration(seconds: 30));
+        await _rescheduleAlarmForTomorrow(id, alarmGen);
+      }
+    }
+  } catch (e) {
+    try {
+      await _showAlarmNotification(
+          'Habit Deadline', (id.hashCode.abs() % 1000000) + 1000000);
+    } catch (_) {}
+  }
+}
+
 class AlarmService {
   static final AlarmService _instance = AlarmService._();
   factory AlarmService() => _instance;
@@ -114,10 +156,8 @@ class AlarmService {
 
   bool _initialized = false;
 
-  /// port name for comunicating from alarm isolate to main isolate.
   static const String _portName = 'habit_alarm_port';
 
-  /// initalize the alarm manager. call once at app startup.
   Future<void> init() async {
     if (_initialized) {
       return;
@@ -125,29 +165,19 @@ class AlarmService {
     await AndroidAlarmManager.initialize();
     _initialized = true;
 
-    // register port so alarm callback can signal ui isolate
-    // used to stop ringtone after timeout or manual dismis.
     final port = ReceivePort();
     IsolateNameServer.removePortNameMapping(_portName);
     IsolateNameServer.registerPortWithName(port.sendPort, _portName);
     port.listen((message) {
-      // when we recieve signal to stop, stop alarm player
       if (message == 'stop') {
         FlutterRingtonePlayer().stop();
       }
     });
   }
 
-  /// generate unique alarm id for habit deadline.
-  /// offset by 200000 to avoid colision with notifcation ids.
   static int alarmId(String habitId) =>
-      (habitId.hashCode.abs() % 100000) + 200000;
+      (habitId.hashCode.abs() % 1000000) + 2000000;
 
-  /// schedual the deadline alarm for habit.
-  ///
-  /// [habitId] — the habits unique id used to check compleation in callback.
-  /// [habitName] — displayd if we show notifcation fallback.
-  /// [timeStr] — deadline time in 'hh:mm' format.
   Future<void> scheduleDeadlineAlarm({
     required String habitId,
     required String habitName,
@@ -160,82 +190,80 @@ class AlarmService {
     final now = DateTime.now();
     var scheduled = DateTime(now.year, now.month, now.day, hour, minute);
 
-    // if time alredy passed today, schedual for tommorow
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
+    final isToday = scheduled.year == now.year &&
+        scheduled.month == now.month &&
+        scheduled.day == now.day;
 
-    // store habit info in sharedprefernces so static callback can read it
+    final id = alarmId(habitId);
+
+    // Bump generation so any running background callback won't overwrite this
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('alarm_habit_id_${alarmId(habitId)}', habitId);
-    await prefs.setString('alarm_habit_name_${alarmId(habitId)}', habitName);
-    await prefs.setString('alarm_deadline_time_${alarmId(habitId)}', timeStr);
+    final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
+    await prefs.setInt('alarm_gen_$id', newGen);
 
-    // schedual one-shot exact alarm
+    // Store alarm metadata BEFORE scheduling so the callback can always find it
+    await prefs.setString('alarm_habit_id_$id', habitId);
+    await prefs.setString('alarm_habit_name_$id', habitName);
+    await prefs.setString('alarm_deadline_time_$id', timeStr);
+
+    // oneShotAt with alarmClock:true uses setAlarmClock which auto-replaces
+    // any existing alarm with the same ID — no need for a separate cancel
     await AndroidAlarmManager.oneShotAt(
       scheduled,
-      alarmId(habitId),
+      id,
       alarmCallback,
       exact: true,
       wakeup: true,
-      alarmClock: true, // Shows alarm icon in status bar, highest priority
+      alarmClock: true,
       rescheduleOnReboot: true,
     );
+
+    debugPrint(
+        'Alarm scheduled: habit=$habitName id=$id at=$scheduled gen=$newGen');
+    debugPrint(
+        'Alarm schedule detail: now=$now scheduled=$scheduled sameDay=$isToday');
   }
 
-  /// cancel scheduled deadline alarm for habit.
   Future<void> cancelDeadlineAlarm(String habitId) async {
-    await AndroidAlarmManager.cancel(alarmId(habitId));
-    // clean up storied prefs
+    final id = alarmId(habitId);
+    await AndroidAlarmManager.cancel(id);
+
+    // Bump generation so any running background callback won't reschedule
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('alarm_habit_id_${alarmId(habitId)}');
-    await prefs.remove('alarm_habit_name_${alarmId(habitId)}');
-    await prefs.remove('alarm_deadline_time_${alarmId(habitId)}');
+    final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
+    await prefs.setInt('alarm_gen_$id', newGen);
+
+    debugPrint('Alarm cancelled: habitId=$habitId alarmId=$id gen=$newGen');
   }
 
-  /// re-arm deadline alarms for all habits at app startups.
-  /// only scheduals for habits that:
-  /// - have deadlinetime set
-  /// - are scheduld for today
-  /// - are not completd today
   Future<void> rescheduleAllDeadlineAlarms(List<Habit> habits) async {
-    final today = DateTime.now().toIso8601String().split('T')[0];
     for (final habit in habits) {
       if (habit.deadlineTime != null && habit.isScheduledForToday()) {
-        if (!habit.completedDates.contains(today)) {
-          await scheduleDeadlineAlarm(
-            habitId: habit.id,
-            habitName: habit.name,
-            timeStr: habit.deadlineTime!,
-          );
-        } else {
-          // alredy completed today — cancel if pending
-          await cancelDeadlineAlarm(habit.id);
-        }
+        await scheduleDeadlineAlarm(
+          habitId: habit.id,
+          habitName: habit.name,
+          timeStr: habit.deadlineTime!,
+        );
       }
     }
   }
 
-  /// stop the alarm sound manualy e.g. from dismiss button.
   void stopAlarm() {
     FlutterRingtonePlayer().stop();
   }
 
-  /// request exact alarm permision android 12+.
-  /// returns true if permision is granted.
   Future<bool> requestExactAlarmPermission() async {
     try {
-      // note: android_alarm_manager_plus doesnt have built-in permision check
-      // the permision is declared in androidmanifest, and android will prompts
-      // the user if needd. on android 12+ with alarmclock: true, it should works.
-      return true;
+      final status = await permission.Permission.scheduleExactAlarm.request();
+      return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// check if app is exempted from baterry optimiztion.
-  /// baterry optimiztion can prevent alarms from working in backgroud.
   Future<bool> isBatteryOptimizationDisabled() async {
     try {
       final status =
@@ -246,8 +274,6 @@ class AlarmService {
     }
   }
 
-  /// request to disable baterry optimiztion for this app.
-  /// this opens system dialog asking user for permision.
   Future<bool> requestBatteryOptimizationExemption() async {
     try {
       final status =
@@ -258,9 +284,6 @@ class AlarmService {
     }
   }
 
-  /// open apps settings page where user can manualy disable restrictions.
-  /// this is usefull for showing users how to disable baterry optimiztion
-  /// and grant exact alarm permisions on android 12+.
   Future<bool> openAppSettings() async {
     try {
       return await permission.openAppSettings();
@@ -269,18 +292,15 @@ class AlarmService {
     }
   }
 
-  /// check if exact alarm permision is availble android 12+.
   Future<bool> canScheduleExactAlarms() async {
     try {
       final status = await permission.Permission.scheduleExactAlarm.status;
       return status.isGranted;
     } catch (e) {
-      // assume granted on older android versons
       return true;
     }
   }
 
-  /// get summary of all alarm-related permisions and optimiztion status.
   Future<Map<String, bool>> getAlarmPermissionsStatus() async {
     return {
       'batteryOptimizationDisabled': await isBatteryOptimizationDisabled(),

@@ -134,6 +134,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isTimeLocked =
+        _isEditing && (widget.existingHabit?.isCompletedToday() ?? false);
 
     return Container(
       decoration: BoxDecoration(
@@ -195,8 +197,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 style:
                     TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
               ),
-
-              // ─── category chips ───
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
@@ -209,8 +209,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                         ))
                     .toList(),
               ),
-
-              // ─── frequencey selector ───
               const SizedBox(height: 20),
               Text(
                 'FREQUENCY',
@@ -246,14 +244,12 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   );
                 }).toList(),
               ),
-
-              // ─── day picker for weakly/custom ───
               if (_frequency == 'weekly' || _frequency == 'custom') ...[
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 6,
                   children: List.generate(7, (i) {
-                    final day = i + 1; // 1=Mon..7=Sun
+                    final day = i + 1;
                     final isSelected = _targetDays.contains(day);
                     return FilterChip(
                       label: Text(
@@ -279,8 +275,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   }),
                 ),
               ],
-
-              // ─── reminder time ───
               const SizedBox(height: 20),
               Text(
                 'REMINDER',
@@ -296,7 +290,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: _pickReminderTime,
+                      onTap: isTimeLocked ? null : _pickReminderTime,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -334,7 +328,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                       ),
                     ),
                   ),
-                  if (_reminderTime != null) ...[
+                  if (_reminderTime != null && !isTimeLocked) ...[
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => setState(() => _reminderTime = null),
@@ -345,8 +339,16 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   ],
                 ],
               ),
-
-              // ─── deadline alarm time ───
+              if (isTimeLocked) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Completed today. Unmark to change reminder time.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               Text(
                 'DEADLINE ALARM',
@@ -362,7 +364,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: _pickDeadlineTime,
+                      onTap: isTimeLocked ? null : _pickDeadlineTime,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -406,7 +408,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                       ),
                     ),
                   ),
-                  if (_deadlineTime != null) ...[
+                  if (_deadlineTime != null && !isTimeLocked) ...[
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => setState(() => _deadlineTime = null),
@@ -417,7 +419,16 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   ],
                 ],
               ),
-
+              if (isTimeLocked) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Completed today. Unmark to change deadline time.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,

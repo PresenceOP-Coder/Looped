@@ -23,24 +23,18 @@ class Habit extends HiveObject {
   @HiveField(5)
   final String? description;
 
-  /// 'daily', 'weakly', or 'custom'
   @HiveField(6)
   final String frequency;
 
-  /// for custom frequencey: list of weekday indices 1=mon..7=sun. null for daily.
   @HiveField(7)
   final List<int>? targetDays;
 
-  /// manual sort postion lower = higher in list
   @HiveField(8)
   final int sortOrder;
 
-  /// reminder time storied as 'hh:mm', null if no reminder
   @HiveField(9)
   final String? reminderTime;
 
-  /// deadline alarm time storied as 'hh:mm', null if no deadline.
-  /// if habit is not completd by this time, the phone alarm rings.
   @HiveField(10)
   final String? deadlineTime;
 
@@ -88,14 +82,12 @@ class Habit extends HiveObject {
     return completedDates.contains(today);
   }
 
-  /// whether this habit is scheduld for today based on its frequencey
   bool isScheduledForToday() {
     if (frequency == 'daily') return true;
     final weekday = DateTime.now().weekday; // 1=Mon..7=Sun
     if (frequency == 'custom' && targetDays != null) {
       return targetDays!.contains(weekday);
     }
-    // 'weakly' defaults to all days treat as daily if no target days
     if (frequency == 'weekly' && targetDays != null) {
       return targetDays!.contains(weekday);
     }

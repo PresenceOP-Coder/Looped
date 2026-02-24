@@ -66,7 +66,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // skip buttion
             Align(
               alignment: Alignment.topRight,
               child: Padding(
@@ -84,7 +83,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // pages
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -94,7 +92,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // botom controls
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
               child: Row(

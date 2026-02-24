@@ -39,7 +39,6 @@ class HabitDetailScreen extends ConsumerWidget {
     final bestStreak = ref.read(habitProvider.notifier).getBestStreak(habit);
     final totalCompletions = habit.completedDates.length;
 
-    // build frequencey label
     String? frequencyLabel;
     if (habit.frequency != 'daily') {
       if (habit.targetDays != null && habit.targetDays!.isNotEmpty) {
@@ -59,7 +58,6 @@ class HabitDetailScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // app bar
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -103,7 +101,6 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -236,7 +233,6 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // stats row
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -270,7 +266,6 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // focus timer
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -281,7 +276,6 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // calendar title
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -297,7 +291,6 @@ class HabitDetailScreen extends ConsumerWidget {
               ),
             ),
 
-            // Calendar
             SliverToBoxAdapter(
               child: _CompletionCalendar(
                 completedDates: habit.completedDates,
@@ -390,7 +383,6 @@ class HabitDetailScreen extends ConsumerWidget {
   }
 }
 
-// ─── focus timer widget ───
 class _FocusTimer extends ConsumerStatefulWidget {
   final String habitId;
   final String habitName;
@@ -450,9 +442,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
   }
 
   void _onTimerComplete() {
-    // Auto-complete the habit for today
     ref.read(habitProvider.notifier).toggleHabit(widget.habitId);
-    // Reset timer so pressing play again doesn't immediately re-trigger
     setState(() {
       _remainingSeconds = _selectedMinutes * 60;
     });
@@ -507,7 +497,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
           ),
           const SizedBox(height: 20),
 
-          // circular progres + time
           SizedBox(
             width: 140,
             height: 140,
@@ -540,7 +529,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
           ),
           const SizedBox(height: 20),
 
-          // preset buttions
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 8,
@@ -576,7 +564,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
           ),
           const SizedBox(height: 16),
 
-          // controls
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -608,7 +595,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
                 ),
               ),
               const SizedBox(width: 12),
-              const SizedBox(width: 40), // Balance spacing
+              const SizedBox(width: 40),
             ],
           ),
         ],
@@ -617,7 +604,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
   }
 }
 
-/// monthly calendar heatmap showing completd days
 class _CompletionCalendar extends StatefulWidget {
   final List<String> completedDates;
   final Color accentColor;

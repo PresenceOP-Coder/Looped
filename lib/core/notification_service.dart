@@ -1,8 +1,16 @@
 import 'dart:io';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+
+/// Top-level handler for notification taps when app is in background/terminated.
+/// Must be a top-level function (not a class method) for background isolate.
+@pragma('vm:entry-point')
+void notificationBackgroundHandler(NotificationResponse response) {
+  debugPrint('Background notification tapped: ${response.payload}');
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -15,7 +23,6 @@ class NotificationService {
   Future<void> init() async {
     if (_initialized) return;
 
-    // initalize timezone data and set devices local timezone
     tz.initializeTimeZones();
     await _configureLocalTimezone();
 
@@ -32,44 +39,41 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        debugPrint('Foreground notification tapped: ${response.payload}');
+      },
+      onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
+    );
     _initialized = true;
 
-    // request notifcation permision required on android 13+
     await requestPermissions();
   }
 
-  /// detect and set devices timezone for proper schedulng.
   Future<void> _configureLocalTimezone() async {
     try {
       final timezoneName = await FlutterTimezone.getLocalTimezone();
       final location = tz.getLocation(timezoneName);
       tz.setLocalLocation(location);
     } catch (_) {
-      // fallback: try common timezone name mappings
       try {
         final timezoneName = await FlutterTimezone.getLocalTimezone();
-        // handle known timezone name diffrences
         final mapped = _timezoneMapping[timezoneName];
         if (mapped != null) {
           tz.setLocalLocation(tz.getLocation(mapped));
         } else {
-          // last resort: use utc offset-based detecton
           final offset = DateTime.now().timeZoneOffset;
           final hours = offset.inHours;
           final knownByOffset = _offsetToTimezone[hours];
           if (knownByOffset != null) {
             tz.setLocalLocation(tz.getLocation(knownByOffset));
           }
-          // if nothing works, tz.local stays utc — times will be off
         }
-      } catch (_) {
-        // tz.local remains utc
-      }
+      } catch (_) {}
     }
   }
 
-  /// mapping for timezone names that differ between android and tz database
   static const _timezoneMapping = <String, String>{
     'Asia/Calcutta': 'Asia/Kolkata',
     'Asia/Saigon': 'Asia/Ho_Chi_Minh',
@@ -84,7 +88,6 @@ class NotificationService {
     'Pacific/Samoa': 'Pacific/Pago_Pago',
   };
 
-  /// fallback: map utc offset in hours to representative timezone
   static const _offsetToTimezone = <int, String>{
     -12: 'Pacific/Wake',
     -11: 'Pacific/Pago_Pago',
@@ -125,17 +128,15 @@ class NotificationService {
     }
   }
 
-  /// schedual daily reminder for habit at given time.
-  /// [habitId] is hashed to create unique notifcation id.
   Future<void> scheduleHabitReminder({
     required String habitId,
     required String habitName,
-    required String timeStr, // 'HH:mm'
+    required String timeStr,
   }) async {
     final parts = timeStr.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
-    final notificationId = habitId.hashCode.abs() % 100000;
+    final notificationId = habitId.hashCode.abs() % 1000000;
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
@@ -146,7 +147,6 @@ class NotificationService {
       hour,
       minute,
     );
-    // if time is in past today, schedual for tommorow
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -177,20 +177,18 @@ class NotificationService {
       'Time for: $habitName',
       scheduled,
       details,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
-  /// cancel the reminder for specific habit.
   Future<void> cancelReminder(String habitId) async {
-    final notificationId = habitId.hashCode.abs() % 100000;
+    final notificationId = habitId.hashCode.abs() % 10000000;
     await _plugin.cancel(notificationId);
   }
 
-  /// cancel all notifcations.
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
   }

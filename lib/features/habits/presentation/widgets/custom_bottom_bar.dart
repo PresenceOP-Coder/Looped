@@ -104,39 +104,24 @@ class _CustomBottomBarState extends State<CustomBottomBar>
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
-        // bar backgroud
         Container(
           padding: EdgeInsets.only(bottom: bottomPadding + 12, top: 8),
           decoration: BoxDecoration(
             color: theme.cardColor,
-            boxShadow: [
-              BoxShadow(
-                color: theme.shadowColor.withOpacity(0.06),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // left items
               ...widget.items.sublist(0, (widget.items.length / 2).ceil()).map(
                     (item) => _buildTabItem(item, theme),
                   ),
-
-              // spacer for center buttion
               const SizedBox(width: 72),
-
-              // right items
               ...widget.items.sublist((widget.items.length / 2).ceil()).map(
                     (item) => _buildTabItem(item, theme),
                   ),
             ],
           ),
         ),
-
-        // center fab — protruding abov bar
         Positioned(
           top: -22,
           child: GestureDetector(
@@ -148,14 +133,10 @@ class _CustomBottomBarState extends State<CustomBottomBar>
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: theme.cardColor, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.35),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                border: Border.all(
+                  color: theme.colorScheme.primary.withOpacity(0.25),
+                  width: 4,
+                ),
               ),
               child: AnimatedRotation(
                 turns: _isMenuOpen ? 0.125 : 0,
@@ -238,7 +219,6 @@ class _MenuOverlay extends StatelessWidget {
 
     return Stack(
       children: [
-        // full-screen dismis area
         GestureDetector(
           onTap: onDismiss,
           child: FadeTransition(
@@ -248,10 +228,8 @@ class _MenuOverlay extends StatelessWidget {
             ),
           ),
         ),
-
-        // popup menu — single pill containg both options
         Positioned(
-          bottom: bottomPadding + 90,
+          bottom: bottomPadding + 102,
           left: (screenWidth - 56) / 2,
           child: ScaleTransition(
             scale: scaleAnim,
@@ -272,7 +250,6 @@ class _MenuOverlay extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // add buttion
                   GestureDetector(
                     onTap: onAddHabit,
                     behavior: HitTestBehavior.opaque,
@@ -282,13 +259,11 @@ class _MenuOverlay extends StatelessWidget {
                           Icon(LucideIcons.plus, color: Colors.white, size: 22),
                     ),
                   ),
-                  // divider
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(horizontal: 12),
                     color: Colors.white.withOpacity(0.2),
                   ),
-                  // stats buttion
                   GestureDetector(
                     onTap: onAnalytics,
                     behavior: HitTestBehavior.opaque,

@@ -18,7 +18,6 @@ class HomeScreen extends ConsumerWidget {
     final today = DateFormat('EEEE, MMM d').format(DateTime.now());
     final todayStr = DateTime.now().toIso8601String().split('T')[0];
 
-    // only count habits scheduld for today
     final scheduledToday =
         habits.where((h) => h.isScheduledForToday()).toList();
     final doneToday =
@@ -96,7 +95,6 @@ class HomeScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // categorie filter chips
                     SizedBox(
                       height: 40,
                       child: ListView(

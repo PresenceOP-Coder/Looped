@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../../habits/providers/habit_provider.dart';
 
-/// analytics data model for quick stat cards
 class AnalyticsStats {
   final int totalHabits;
   final int totalCompletions;
@@ -22,7 +21,6 @@ class AnalyticsStats {
   });
 }
 
-/// weakly completions: how many habits completd each day for last 7 days
 class DayCompletion {
   final DateTime date;
   final int count;
@@ -35,7 +33,6 @@ class DayCompletion {
   });
 }
 
-/// categorie breakdown for donut chart
 class CategoryStat {
   final String name;
   final Color color;
@@ -52,7 +49,6 @@ class CategoryStat {
   });
 }
 
-/// streak info for lederboard
 class HabitStreak {
   final String habitName;
   final String category;
@@ -67,15 +63,12 @@ class HabitStreak {
   });
 }
 
-/// day-of-weak average for "best day" chart
 class DayOfWeekStat {
   final String day;
   final double avgCompletions;
 
   const DayOfWeekStat({required this.day, required this.avgCompletions});
 }
-
-// ─── providers ────────────────────────────────────────────────
 
 final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
   final habits = ref.watch(habitProvider);
@@ -91,11 +84,9 @@ final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
     );
   }
 
-  // total complations
   final totalCompletions =
       habits.fold<int>(0, (sum, h) => sum + h.completedDates.length);
 
-  // perfect days: days where all habits were completd
   final allDates = <String>{};
   for (final h in habits) {
     allDates.addAll(h.completedDates);
@@ -107,7 +98,6 @@ final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
     if (allDone) perfectDays++;
   }
 
-  // longest streak accross all habits
   int longestStreak = 0;
   String? mostConsistentHabit;
   for (final h in habits) {
@@ -206,7 +196,6 @@ final dayOfWeekStatsProvider = Provider<List<DayOfWeekStat>>((ref) {
     }
   }
 
-  // calculate weaks active to get averages
   if (habits.isEmpty) {
     return dayNames
         .asMap()
@@ -229,13 +218,11 @@ final dayOfWeekStatsProvider = Provider<List<DayOfWeekStat>>((ref) {
   });
 });
 
-/// heatmap data: date → compleation count for last 3 months
 final heatmapDataProvider = Provider<Map<String, int>>((ref) {
   final habits = ref.watch(habitProvider);
   final now = DateTime.now();
   final Map<String, int> heatmap = {};
 
-  // last 90 days
   for (int i = 0; i < 90; i++) {
     final date = now.subtract(Duration(days: 89 - i));
     final dateStr = date.toIso8601String().split('T')[0];

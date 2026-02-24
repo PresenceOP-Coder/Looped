@@ -35,23 +35,14 @@ void main() async {
     await Hive.openBox<Habit>(AppConstants.habitBoxName);
   }
 
-  // init notifcation service here
   await NotificationService().init();
-
-  // init alarm servise for deadlines alarm
   await AlarmService().init();
-
-  // request exact alarm permision and baterry optimiztion exemption
   await AlarmService().requestExactAlarmPermission();
+  await AlarmService().requestBatteryOptimizationExemption();
 
-  // check baterry optimiztion status
-  await AlarmService().isBatteryOptimizationDisabled();
-
-  // re-arm deadline alarms for new day
   final habitBox = Hive.box<Habit>(AppConstants.habitBoxName);
   await AlarmService().rescheduleAllDeadlineAlarms(habitBox.values.toList());
 
-  // check if onbording has been completd
   final prefs = await SharedPreferences.getInstance();
   final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
 

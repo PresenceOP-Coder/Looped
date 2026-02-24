@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ─── brand colors ───
   static const indigo = Color(0xFF6366F1);
   static const indigoLight = Color(0xFF818CF8);
 
-  // ─── light theme ───
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
@@ -47,7 +45,6 @@ class AppTheme {
     );
   }
 
-  // ─── dark theme ───
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,

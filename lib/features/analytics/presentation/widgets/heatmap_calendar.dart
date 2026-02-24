@@ -54,10 +54,8 @@ class HeatmapCalendar extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // month labels
           _buildMonthLabels(now, theme),
           const SizedBox(height: 6),
-          // heatmap grid
           SizedBox(
             height: 7 * 14.0, // 7 rows × (10 cell + 4 gap)
             child: LayoutBuilder(
@@ -74,7 +72,6 @@ class HeatmapCalendar extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // legend
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -124,7 +121,6 @@ class HeatmapCalendar extends ConsumerWidget {
       final date = startDate.add(Duration(days: i));
       final monthStr = DateFormat('MMM').format(date);
       if (monthStr != lastMonth) {
-        // aproximate column postion
         final weekCol = i ~/ 7;
         months.add(_MonthLabel(label: monthStr, col: weekCol));
         lastMonth = monthStr;
@@ -175,8 +171,7 @@ class _HeatmapPainter extends CustomPainter {
     const gap = 4.0;
 
     final startDate = now.subtract(const Duration(days: 89));
-    // align to start of weak monday
-    final startWeekday = startDate.weekday; // 1=Mon..7=Sun
+    final startWeekday = startDate.weekday;
 
     for (int i = 0; i < 90; i++) {
       final date = startDate.add(Duration(days: i));
@@ -184,7 +179,7 @@ class _HeatmapPainter extends CustomPainter {
       final count = heatmap[dateStr] ?? 0;
 
       final col = (i + startWeekday - 1) ~/ 7;
-      final row = (date.weekday - 1); // 0=Mon..6=Sun
+      final row = (date.weekday - 1);
 
       final ratio = (count / totalHabits).clamp(0.0, 1.0);
       final color = count == 0
