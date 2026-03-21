@@ -83,13 +83,12 @@ class AnalyticsScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Expanded(child: CategoryDonutChart()),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 100,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 420;
+
+                    final bestDayCard = SizedBox(
+                      width: isNarrow ? 140 : 100,
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -138,8 +137,31 @@ class AnalyticsScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const CategoryDonutChart(),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: bestDayCard,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(child: CategoryDonutChart()),
+                        const SizedBox(width: 12),
+                        bestDayCard,
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

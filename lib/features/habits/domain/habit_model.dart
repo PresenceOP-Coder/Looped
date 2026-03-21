@@ -38,6 +38,9 @@ class Habit extends HiveObject {
   @HiveField(10)
   final String? deadlineTime;
 
+  @HiveField(11)
+  final List<String> freezeDates;
+
   Habit({
     required this.id,
     required this.name,
@@ -50,6 +53,7 @@ class Habit extends HiveObject {
     this.sortOrder = 0,
     this.reminderTime,
     this.deadlineTime,
+    this.freezeDates = const [],
   });
 
   factory Habit.create({
@@ -74,6 +78,7 @@ class Habit extends HiveObject {
       sortOrder: sortOrder,
       reminderTime: reminderTime,
       deadlineTime: deadlineTime,
+      freezeDates: const [],
     );
   }
 
@@ -84,7 +89,7 @@ class Habit extends HiveObject {
 
   bool isScheduledForToday() {
     if (frequency == 'daily') return true;
-    final weekday = DateTime.now().weekday; // 1=Mon..7=Sun
+    final weekday = DateTime.now().weekday;
     if (frequency == 'custom' && targetDays != null) {
       return targetDays!.contains(weekday);
     }
@@ -104,6 +109,7 @@ class Habit extends HiveObject {
     int? sortOrder,
     String? reminderTime,
     String? deadlineTime,
+    List<String>? freezeDates,
     bool clearReminderTime = false,
     bool clearTargetDays = false,
     bool clearDeadlineTime = false,
@@ -122,6 +128,7 @@ class Habit extends HiveObject {
           clearReminderTime ? null : (reminderTime ?? this.reminderTime),
       deadlineTime:
           clearDeadlineTime ? null : (deadlineTime ?? this.deadlineTime),
+      freezeDates: freezeDates ?? this.freezeDates,
     );
   }
 }

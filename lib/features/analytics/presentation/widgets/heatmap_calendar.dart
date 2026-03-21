@@ -57,7 +57,7 @@ class HeatmapCalendar extends ConsumerWidget {
           _buildMonthLabels(now, theme),
           const SizedBox(height: 6),
           SizedBox(
-            height: 7 * 14.0, // 7 rows × (10 cell + 4 gap)
+            height: 7 * 14.0,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return CustomPaint(

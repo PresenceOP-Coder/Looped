@@ -20,7 +20,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
   late String _selectedCategory;
   late String _frequency;
   late List<int> _targetDays;
-  String? _reminderTime;
   String? _deadlineTime;
 
   bool get _isEditing => widget.existingHabit != null;
@@ -37,7 +36,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
     _selectedCategory = widget.existingHabit?.category ?? 'Growth';
     _frequency = widget.existingHabit?.frequency ?? 'daily';
     _targetDays = List<int>.from(widget.existingHabit?.targetDays ?? []);
-    _reminderTime = widget.existingHabit?.reminderTime;
     _deadlineTime = widget.existingHabit?.deadlineTime;
   }
 
@@ -70,8 +68,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
             frequency: _frequency,
             targetDays: effectiveTargetDays,
             clearTargetDays: effectiveTargetDays == null,
-            reminderTime: _reminderTime,
-            clearReminderTime: _reminderTime == null,
+            // Reminder feature removed from the UI: always clear stored reminderTime.
+            clearReminderTime: true,
             deadlineTime: _deadlineTime,
             clearDeadlineTime: _deadlineTime == null,
           );
@@ -82,32 +80,10 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
             description: description,
             frequency: _frequency,
             targetDays: effectiveTargetDays,
-            reminderTime: _reminderTime,
             deadlineTime: _deadlineTime,
           );
     }
     Navigator.pop(context);
-  }
-
-  Future<void> _pickReminderTime() async {
-    final initial = _reminderTime != null
-        ? TimeOfDay(
-            hour: int.parse(_reminderTime!.split(':')[0]),
-            minute: int.parse(_reminderTime!.split(':')[1]),
-          )
-        : const TimeOfDay(hour: 8, minute: 0);
-
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
-
-    if (picked != null) {
-      setState(() {
-        _reminderTime =
-            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-      });
-    }
   }
 
   Future<void> _pickDeadlineTime() async {
@@ -273,80 +249,6 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                       },
                     );
                   }),
-                ),
-              ],
-              const SizedBox(height: 20),
-              Text(
-                'REMINDER',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: isTimeLocked ? null : _pickReminderTime,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: theme.scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: theme.dividerColor),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(LucideIcons.bell,
-                                size: 18,
-                                color: _reminderTime != null
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.onSurface
-                                        .withOpacity(0.3)),
-                            const SizedBox(width: 10),
-                            Text(
-                              _reminderTime != null
-                                  ? 'Remind at $_reminderTime'
-                                  : 'Set reminder (optional)',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: _reminderTime != null
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: _reminderTime != null
-                                    ? theme.colorScheme.onSurface
-                                    : theme.colorScheme.onSurface
-                                        .withOpacity(0.3),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_reminderTime != null && !isTimeLocked) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => setState(() => _reminderTime = null),
-                      icon: Icon(LucideIcons.x,
-                          size: 18,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4)),
-                    ),
-                  ],
-                ],
-              ),
-              if (isTimeLocked) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Completed today. Unmark to change reminder time.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  ),
                 ),
               ],
               const SizedBox(height: 20),

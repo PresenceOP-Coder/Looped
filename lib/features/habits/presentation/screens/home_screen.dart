@@ -161,40 +161,33 @@ class HomeScreen extends ConsumerWidget {
                   : SliverReorderableList(
                       itemBuilder: (context, index) {
                         final habit = habits[index];
-                        return ReorderableDragStartListener(
-                          key: Key(habit.id),
-                          index: index,
-                          child: Dismissible(
-                            key: Key('dismiss_${habit.id}'),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (direction) {
-                              ref
-                                  .read(habitProvider.notifier)
-                                  .deleteHabit(habit.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      '${habit.name} removed from routine'),
-                                  behavior: SnackBarBehavior.floating,
-                                  backgroundColor: const Color(0xFF1E293B),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
+                        return Dismissible(
+                          key: Key('dismiss_${habit.id}'),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (direction) {
+                            ref
+                                .read(habitProvider.notifier)
+                                .deleteHabit(habit.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${habit.name} removed from routine',
                                 ),
-                              );
-                            },
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 24),
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade400,
-                                borderRadius: BorderRadius.circular(28),
                               ),
-                              child: const Icon(LucideIcons.trash2,
-                                  color: Colors.white),
+                            );
+                          },
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 24),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade400,
+                              borderRadius: BorderRadius.circular(28),
                             ),
-                            child: HabitCard(habit: habit),
+                            child: const Icon(LucideIcons.trash2,
+                                color: Colors.white),
                           ),
+                          child: HabitCard(habit: habit, index: index),
                         );
                       },
                       itemCount: habits.length,

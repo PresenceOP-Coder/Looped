@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
@@ -12,8 +13,6 @@ import 'package:permission_handler/permission_handler.dart' as permission;
 import '../features/habits/domain/habit_model.dart';
 import 'constants.dart';
 
-/// Shows a high-priority heads-up notification for a habit alarm.
-/// Works in both foreground and background isolates.
 Future<void> _showAlarmNotification(
     String habitName, int notificationId) async {
   final plugin = FlutterLocalNotificationsPlugin();
@@ -21,6 +20,12 @@ Future<void> _showAlarmNotification(
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
   const settings = InitializationSettings(android: androidSettings);
   await plugin.initialize(settings);
+
+  const stopAction = AndroidNotificationAction(
+    'STOP_ALARM',
+    'Stop alarm',
+    showsUserInterface: false,
+  );
 
   const androidDetails = AndroidNotificationDetails(
     'habit_alarm_channel',
@@ -36,7 +41,8 @@ Future<void> _showAlarmNotification(
     ongoing: true,
     autoCancel: false,
     icon: '@mipmap/ic_launcher',
-    timeoutAfter: 60000, // auto-dismiss after 60 seconds
+    timeoutAfter: 60000,
+    actions: [stopAction],
   );
 
   const details = NotificationDetails(android: androidDetails);
@@ -46,20 +52,16 @@ Future<void> _showAlarmNotification(
     'HabitFlow Alarm',
     'Deadline reached for: $habitName',
     details,
+    payload: habitName,
   );
 }
 
-/// Re-schedules the alarm for tomorrow. Only proceeds if no one else
-/// (e.g. the main isolate) has rescheduled/cancelled since this callback started.
 Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    // Force fresh read from disk (cross-isolate safety)
     await prefs.reload();
     final currentGen = prefs.getInt('alarm_gen_$id') ?? 0;
     if (currentGen != expectedGen) {
-      debugPrint(
-          'Skipping reschedule for alarm $id: gen changed ($expectedGen → $currentGen)');
       return;
     }
 
@@ -82,12 +84,12 @@ Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
         exact: true,
         wakeup: true,
         alarmClock: true,
+
+        
         rescheduleOnReboot: true,
       );
-      debugPrint('Rescheduled alarm $id for tomorrow: $nextAlarm');
     }
   } catch (e) {
-    debugPrint('Failed to reschedule alarm $id: $e');
   }
 }
 
@@ -110,13 +112,12 @@ Future<void> alarmCallback(int id) async {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.reload(); // fresh read from disk
+    await prefs.reload();
     alarmGen = prefs.getInt('alarm_gen_$id') ?? 0;
     final habitId = prefs.getString('alarm_habit_id_$id');
     final habitName = prefs.getString('alarm_habit_name_$id') ?? 'Your Habit';
 
     if (habitId != null) {
-      final today = DateTime.now().toIso8601String().split('T')[0];
       final habit = box.values.cast<Habit?>().firstWhere(
             (h) => h!.id == habitId,
             orElse: () => null,
@@ -124,7 +125,14 @@ Future<void> alarmCallback(int id) async {
 
       if (habit != null) {
         final notificationId = (habitId.hashCode.abs() % 1000000) + 1000000;
-        await _showAlarmNotification(habitName, notificationId);
+        await prefs.setBool('alarm_ringing', true);
+        // If the app is currently running, notify the UI isolate to show the prompt.
+        IsolateNameServer.lookupPortByName(AlarmService._portName)
+            ?.send('ring');
+
+        try {
+          await _showAlarmNotification(habitName, notificationId);
+        } catch (_) {}
 
         try {
           final player = FlutterRingtonePlayer();
@@ -133,9 +141,23 @@ Future<void> alarmCallback(int id) async {
             volume: 1.0,
             asAlarm: true,
           );
-          await Future.delayed(const Duration(seconds: 30));
+
+          // Stop early if the user taps “Stop alarm” (which flips `alarm_ringing`).
+          final end = DateTime.now().add(const Duration(seconds: 90));
+          while (DateTime.now().isBefore(end)) {
+            // Reload so this background isolate sees the latest value written by UI.
+            await prefs.reload();
+            final shouldKeepRinging = prefs.getBool('alarm_ringing') ?? true;
+            if (!shouldKeepRinging) break;
+            await Future.delayed(const Duration(milliseconds: 500));
+          }
+
           await player.stop();
         } catch (_) {}
+
+        await prefs.setBool('alarm_ringing', false);
+        IsolateNameServer.lookupPortByName(AlarmService._portName)
+            ?.send('stop');
 
         await Future.delayed(const Duration(seconds: 30));
         await _rescheduleAlarmForTomorrow(id, alarmGen);
@@ -158,6 +180,11 @@ class AlarmService {
 
   static const String _portName = 'habit_alarm_port';
 
+  final StreamController<bool> _alarmPromptController =
+      StreamController<bool>.broadcast();
+
+  Stream<bool> get alarmPromptStream => _alarmPromptController.stream;
+
   Future<void> init() async {
     if (_initialized) {
       return;
@@ -169,8 +196,11 @@ class AlarmService {
     IsolateNameServer.removePortNameMapping(_portName);
     IsolateNameServer.registerPortWithName(port.sendPort, _portName);
     port.listen((message) {
-      if (message == 'stop') {
+      if (message == 'ring') {
+        _alarmPromptController.add(true);
+      } else if (message == 'stop') {
         FlutterRingtonePlayer().stop();
+        _alarmPromptController.add(false);
       }
     });
   }
@@ -193,24 +223,16 @@ class AlarmService {
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
-    final isToday = scheduled.year == now.year &&
-        scheduled.month == now.month &&
-        scheduled.day == now.day;
-
     final id = alarmId(habitId);
 
-    // Bump generation so any running background callback won't overwrite this
     final prefs = await SharedPreferences.getInstance();
     final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
     await prefs.setInt('alarm_gen_$id', newGen);
 
-    // Store alarm metadata BEFORE scheduling so the callback can always find it
     await prefs.setString('alarm_habit_id_$id', habitId);
     await prefs.setString('alarm_habit_name_$id', habitName);
     await prefs.setString('alarm_deadline_time_$id', timeStr);
 
-    // oneShotAt with alarmClock:true uses setAlarmClock which auto-replaces
-    // any existing alarm with the same ID — no need for a separate cancel
     await AndroidAlarmManager.oneShotAt(
       scheduled,
       id,
@@ -220,23 +242,15 @@ class AlarmService {
       alarmClock: true,
       rescheduleOnReboot: true,
     );
-
-    debugPrint(
-        'Alarm scheduled: habit=$habitName id=$id at=$scheduled gen=$newGen');
-    debugPrint(
-        'Alarm schedule detail: now=$now scheduled=$scheduled sameDay=$isToday');
   }
 
   Future<void> cancelDeadlineAlarm(String habitId) async {
     final id = alarmId(habitId);
     await AndroidAlarmManager.cancel(id);
 
-    // Bump generation so any running background callback won't reschedule
     final prefs = await SharedPreferences.getInstance();
     final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
     await prefs.setInt('alarm_gen_$id', newGen);
-
-    debugPrint('Alarm cancelled: habitId=$habitId alarmId=$id gen=$newGen');
   }
 
   Future<void> rescheduleAllDeadlineAlarms(List<Habit> habits) async {
@@ -253,6 +267,18 @@ class AlarmService {
 
   void stopAlarm() {
     FlutterRingtonePlayer().stop();
+    _alarmPromptController.add(false);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('alarm_ringing', false);
+    });
+  }
+
+  /// Used by notification taps/full-screen intents to force the UI prompt.
+  void notifyAlarmRang() {
+    _alarmPromptController.add(true);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setBool('alarm_ringing', true);
+    });
   }
 
   Future<bool> requestExactAlarmPermission() async {

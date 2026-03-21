@@ -1,15 +1,15 @@
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'alarm_service.dart';
 
-/// Top-level handler for notification taps when app is in background/terminated.
-/// Must be a top-level function (not a class method) for background isolate.
 @pragma('vm:entry-point')
 void notificationBackgroundHandler(NotificationResponse response) {
-  debugPrint('Background notification tapped: ${response.payload}');
+  if (response.actionId == 'STOP_ALARM') {
+    AlarmService().stopAlarm();
+  }
 }
 
 class NotificationService {
@@ -42,7 +42,13 @@ class NotificationService {
     await _plugin.initialize(
       settings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Foreground notification tapped: ${response.payload}');
+        if (response.actionId == 'STOP_ALARM') {
+          AlarmService().stopAlarm();
+          return;
+        }
+
+        // Default notification tap: show the alarm stop prompt.
+        AlarmService().notifyAlarmRang();
       },
       onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
     );
