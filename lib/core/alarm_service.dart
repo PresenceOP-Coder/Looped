@@ -145,9 +145,12 @@ Future<void> alarmCallback(int id) async {
           // Stop early if the user taps “Stop alarm” (which flips `alarm_ringing`).
           final end = DateTime.now().add(const Duration(seconds: 90));
           while (DateTime.now().isBefore(end)) {
-            // Reload so this background isolate sees the latest value written by UI.
-            await prefs.reload();
-            final shouldKeepRinging = prefs.getBool('alarm_ringing') ?? true;
+            // Important: another isolate might update SharedPreferences.
+            // Re-get the instance + reload so we don't read a cached value.
+            final latestPrefs = await SharedPreferences.getInstance();
+            await latestPrefs.reload();
+            final shouldKeepRinging =
+                latestPrefs.getBool('alarm_ringing') ?? true;
             if (!shouldKeepRinging) break;
             await Future.delayed(const Duration(milliseconds: 500));
           }
@@ -205,7 +208,16 @@ class AlarmService {
     });
   }
 
-  static int alarmId(String habitId) =>
+  // New alarm id generation:
+  // - Avoids modulo compression that can cause collisions (overwrites).
+  // - Keeps the id within a safe positive int range.
+  static int alarmId(String habitId) {
+    final masked = habitId.hashCode & 0x3fffffff; // 30-bit positive range
+    return masked + 2000000;
+  }
+
+  // Legacy alarm id generation (kept for migration/cancel).
+  static int legacyAlarmId(String habitId) =>
       (habitId.hashCode.abs() % 1000000) + 2000000;
 
   Future<void> scheduleDeadlineAlarm({
@@ -246,7 +258,11 @@ class AlarmService {
 
   Future<void> cancelDeadlineAlarm(String habitId) async {
     final id = alarmId(habitId);
-    await AndroidAlarmManager.cancel(id);
+    // Cancel both:
+    // - legacy id (previous versions / migration)
+    // - current id
+    await AndroidAlarmManager.cancel(legacyAlarmId(habitId));
+    await AndroidAlarmManager.cancel(alarmId(habitId));
 
     final prefs = await SharedPreferences.getInstance();
     final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
@@ -256,6 +272,9 @@ class AlarmService {
   Future<void> rescheduleAllDeadlineAlarms(List<Habit> habits) async {
     for (final habit in habits) {
       if (habit.deadlineTime != null && habit.isScheduledForToday()) {
+        // Migration: remove any legacy alarms so they don't overwrite/show duplicates.
+        await AndroidAlarmManager.cancel(legacyAlarmId(habit.id));
+
         await scheduleDeadlineAlarm(
           habitId: habit.id,
           habitName: habit.name,
@@ -265,12 +284,12 @@ class AlarmService {
     }
   }
 
-  void stopAlarm() {
+  Future<void> stopAlarm() async {
     FlutterRingtonePlayer().stop();
     _alarmPromptController.add(false);
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setBool('alarm_ringing', false);
-    });
+    final prefs = await SharedPreferences.getInstance();
+    // Await so the alarmCallback isolate sees the update quickly.
+    await prefs.setBool('alarm_ringing', false);
   }
 
   /// Used by notification taps/full-screen intents to force the UI prompt.

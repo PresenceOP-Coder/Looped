@@ -283,7 +283,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       if (!wasCompleted) {
         await _freezeService.clearRecoveryWindow(id);
         await AlarmService().cancelDeadlineAlarm(id);
-        AlarmService().stopAlarm();
+        await AlarmService().stopAlarm();
       } else {
         await _freezeService.startRecoveryWindow(habitId: id);
         final canRecover = await _freezeService.isRecoveryWindowActive(id);

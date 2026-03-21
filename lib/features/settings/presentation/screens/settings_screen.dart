@@ -184,7 +184,9 @@ class SettingsScreen extends ConsumerWidget {
                           icon: LucideIcons.bellOff,
                           label: 'Stop Alarm Sound',
                           subtitle: 'Stop any currently ringing alarm',
-                          onTap: () => AlarmService().stopAlarm(),
+                        onTap: () {
+                          AlarmService().stopAlarm();
+                        },
                         ),
                       ],
                     ),

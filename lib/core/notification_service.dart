@@ -6,9 +6,9 @@ import 'package:timezone/timezone.dart' as tz;
 import 'alarm_service.dart';
 
 @pragma('vm:entry-point')
-void notificationBackgroundHandler(NotificationResponse response) {
+Future<void> notificationBackgroundHandler(NotificationResponse response) async {
   if (response.actionId == 'STOP_ALARM') {
-    AlarmService().stopAlarm();
+    await AlarmService().stopAlarm();
   }
 }
 
@@ -41,9 +41,9 @@ class NotificationService {
 
     await _plugin.initialize(
       settings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
         if (response.actionId == 'STOP_ALARM') {
-          AlarmService().stopAlarm();
+          await AlarmService().stopAlarm();
           return;
         }
 
