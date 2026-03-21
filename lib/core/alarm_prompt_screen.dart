@@ -26,8 +26,8 @@ class AlarmPromptScreen extends StatelessWidget {
         child: SafeArea(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () {
-              AlarmService().stopAlarm();
+            onTap: () async {
+              await AlarmService().stopAlarm();
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -70,8 +70,8 @@ class AlarmPromptScreen extends StatelessWidget {
                       width: 170,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: () {
-                          AlarmService().stopAlarm();
+                        onPressed: () async {
+                          await AlarmService().stopAlarm();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accent,
