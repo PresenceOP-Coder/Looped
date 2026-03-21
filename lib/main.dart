@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:habit_flow/core/notification_service.dart';
 import 'package:habit_flow/core/alarm_service.dart';
+import 'package:habit_flow/core/alarm_prompt_screen.dart';
 import 'package:habit_flow/core/theme.dart';
 import 'package:habit_flow/core/theme_provider.dart';
 import 'package:habit_flow/features/habits/presentation/screens/app_shell.dart';
@@ -12,6 +14,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants.dart';
 import 'features/habits/domain/habit_model.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,30 +49,99 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
+  final alarmRinging = prefs.getBool('alarm_ringing') ?? false;
 
   runApp(
     ProviderScope(
-      child: HabitFlowApp(showOnboarding: !onboardingSeen),
+      child: HabitFlowApp(
+        showOnboarding: !onboardingSeen,
+        showStopAlarmPrompt: alarmRinging,
+      ),
     ),
   );
 }
 
-class HabitFlowApp extends ConsumerWidget {
+class HabitFlowApp extends ConsumerStatefulWidget {
   final bool showOnboarding;
+  final bool showStopAlarmPrompt;
 
-  const HabitFlowApp({super.key, required this.showOnboarding});
+  const HabitFlowApp({
+    super.key,
+    required this.showOnboarding,
+    required this.showStopAlarmPrompt,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HabitFlowApp> createState() => _HabitFlowAppState();
+}
+
+class _HabitFlowAppState extends ConsumerState<HabitFlowApp> {
+  StreamSubscription<bool>? _alarmPromptSub;
+  bool _dialogOpen = false;
+
+  void _showStopAlarmPrompt() {
+    if (_dialogOpen) return;
+    final ctx = navigatorKey.currentContext;
+    if (ctx == null) return;
+
+    _dialogOpen = true;
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (ctx) => const AlarmPromptScreen(),
+    ).then((_) {
+      _dialogOpen = false;
+    });
+  }
+
+  void _hideStopAlarmPrompt() {
+    if (!_dialogOpen) return;
+    _dialogOpen = false;
+    if (navigatorKey.currentState?.canPop() ?? false) {
+      navigatorKey.currentState!.pop();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _alarmPromptSub = AlarmService().alarmPromptStream.listen((visible) {
+      if (!mounted) return;
+      if (visible) {
+        _showStopAlarmPrompt();
+      } else {
+        _hideStopAlarmPrompt();
+      }
+    });
+
+    if (widget.showStopAlarmPrompt) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showStopAlarmPrompt();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _alarmPromptSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
-      title: 'HabitFlow',
+      title: 'Looped',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      home: showOnboarding ? const OnboardingScreen() : const AppShell(),
+      navigatorKey: navigatorKey,
+      home:
+          widget.showOnboarding ? const OnboardingScreen() : const AppShell(),
     );
   }
 }

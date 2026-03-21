@@ -9,8 +9,9 @@ import 'add_habit_modal.dart';
 
 class HabitCard extends ConsumerWidget {
   final Habit habit;
+  final int index;
 
-  const HabitCard({super.key, required this.habit});
+  const HabitCard({super.key, required this.habit, required this.index});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,10 +49,14 @@ class HabitCard extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(
-                LucideIcons.gripVertical,
-                size: 16,
-                color: theme.colorScheme.onSurface.withOpacity(0.2),
+              ReorderableDragStartListener(
+                key: ValueKey(habit.id),
+                index: index,
+                child: Icon(
+                  LucideIcons.gripVertical,
+                  size: 16,
+                  color: theme.colorScheme.onSurface.withOpacity(0.2),
+                ),
               ),
               const SizedBox(width: 8),
 

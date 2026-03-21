@@ -38,6 +38,8 @@ class HabitDetailScreen extends ConsumerWidget {
     final streak = ref.read(habitProvider.notifier).getStreak(habit);
     final bestStreak = ref.read(habitProvider.notifier).getBestStreak(habit);
     final totalCompletions = habit.completedDates.length;
+    final freezeRemainingAsync = ref.watch(freezeRemainingProvider);
+    final freezeRemaining = freezeRemainingAsync.valueOrNull ?? 0;
 
     String? frequencyLabel;
     if (habit.frequency != 'daily') {
@@ -100,7 +102,6 @@ class HabitDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -232,7 +233,6 @@ class HabitDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -265,7 +265,42 @@ class HabitDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: freezeRemaining > 0
+                        ? () async {
+                            final applied = await ref
+                                .read(habitProvider.notifier)
+                                .applyManualFreezeForYesterday(habit.id);
+                            ref.invalidate(freezeRemainingProvider);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  applied
+                                      ? 'Freeze applied for yesterday.'
+                                      : 'Could not apply freeze for yesterday.',
+                                ),
+                              ),
+                            );
+                          }
+                        : null,
+                    icon: const Icon(LucideIcons.snowflake, size: 16),
+                    label: Text(
+                        'Use Freeze for Yesterday ($freezeRemaining left)'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -275,7 +310,6 @@ class HabitDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -290,14 +324,12 @@ class HabitDetailScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: _CompletionCalendar(
                 completedDates: habit.completedDates,
                 accentColor: cat.color,
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
@@ -449,11 +481,8 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.habitName} completed! Great focus session.'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: const Color(0xFF10B981),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content:
+              Text('${widget.habitName} completed! Great focus session.'),
         ),
       );
     }
@@ -496,7 +525,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
             ],
           ),
           const SizedBox(height: 20),
-
           SizedBox(
             width: 140,
             height: 140,
@@ -528,7 +556,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
             ),
           ),
           const SizedBox(height: 20),
-
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 8,
@@ -563,7 +590,6 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
             }).toList(),
           ),
           const SizedBox(height: 16),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

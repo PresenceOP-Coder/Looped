@@ -61,69 +61,88 @@ class CategoryDonutChart extends ConsumerWidget {
           else
             LayoutBuilder(
               builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 360;
                 final chartSize =
-                    (constraints.maxWidth * 0.4).clamp(80.0, 130.0);
+                    (constraints.maxWidth * 0.38).clamp(75.0, 130.0);
+
+                final categoryRows = categories.map((c) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: c.color,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            c.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${c.percentage.round()}%',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: c.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList();
+
+                final chart = SizedBox(
+                  width: chartSize,
+                  height: chartSize,
+                  child: PieChart(
+                    PieChartData(
+                      sectionsSpace: 3,
+                      centerSpaceRadius: chartSize * 0.23,
+                      sections: categories.map((c) {
+                        return PieChartSectionData(
+                          value: c.completions.toDouble(),
+                          color: c.color,
+                          radius: chartSize * 0.23,
+                          showTitle: false,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      chart,
+                      const SizedBox(height: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: categoryRows,
+                      ),
+                    ],
+                  );
+                }
+
                 return Row(
                   children: [
-                    SizedBox(
-                      width: chartSize,
-                      height: chartSize,
-                      child: PieChart(
-                        PieChartData(
-                          sectionsSpace: 3,
-                          centerSpaceRadius: chartSize * 0.23,
-                          sections: categories.map((c) {
-                            return PieChartSectionData(
-                              value: c.completions.toDouble(),
-                              color: c.color,
-                              radius: chartSize * 0.23,
-                              showTitle: false,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
+                    chart,
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: categories.map((c) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: c.color,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    c.name,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onSurface
-                                          .withOpacity(0.7),
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '${c.percentage.round()}%',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: c.color,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                        children: categoryRows,
                       ),
                     ),
                   ],

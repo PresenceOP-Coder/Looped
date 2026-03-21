@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'habit_model.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class HabitAdapter extends TypeAdapter<Habit> {
   @override
@@ -28,13 +22,14 @@ class HabitAdapter extends TypeAdapter<Habit> {
       sortOrder: fields[8] as int,
       reminderTime: fields[9] as String?,
       deadlineTime: fields[10] as String?,
+      freezeDates: (fields[11] as List?)?.cast<String>() ?? const [],
     );
   }
 
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +51,9 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(9)
       ..write(obj.reminderTime)
       ..writeByte(10)
-      ..write(obj.deadlineTime);
+      ..write(obj.deadlineTime)
+      ..writeByte(11)
+      ..write(obj.freezeDates);
   }
 
   @override

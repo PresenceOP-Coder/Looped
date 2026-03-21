@@ -224,7 +224,7 @@ class _MenuOverlay extends StatelessWidget {
           child: FadeTransition(
             opacity: fadeAnim,
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.transparent,
             ),
           ),
         ),
@@ -239,13 +239,7 @@ class _MenuOverlay extends StatelessWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: const <BoxShadow>[],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

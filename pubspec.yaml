@@ -38,6 +38,8 @@ dev_dependencies:
     sdk: flutter
   
   flutter_lints: ^3.0.0
+
+  flutter_launcher_icons: ^0.14.4
   
   # Code Generation for Hive and JSON
   build_runner: ^2.4.7
@@ -46,3 +48,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/looped_logo.png"

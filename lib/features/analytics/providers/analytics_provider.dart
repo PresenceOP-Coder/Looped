@@ -24,7 +24,7 @@ class AnalyticsStats {
 class DayCompletion {
   final DateTime date;
   final int count;
-  final String dayLabel; // Mon, Tue, etc.
+  final String dayLabel;
 
   const DayCompletion({
     required this.date,

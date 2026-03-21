@@ -178,6 +178,14 @@ class SettingsScreen extends ConsumerWidget {
                           subtitle: 'View current permission status',
                           onTap: () => _checkAlarmStatus(context),
                         ),
+                        Divider(height: 1, color: borderColor),
+                        _actionTile(
+                          context: context,
+                          icon: LucideIcons.bellOff,
+                          label: 'Stop Alarm Sound',
+                          subtitle: 'Stop any currently ringing alarm',
+                          onTap: () => AlarmService().stopAlarm(),
+                        ),
                       ],
                     ),
                   ],
@@ -421,10 +429,6 @@ class SettingsScreen extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('All data has been reset'),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
                   ),
                 );
               }
@@ -444,14 +448,11 @@ class SettingsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result
-                ? '✅ Battery restrictions disabled'
-                : '⚠️ Battery restrictions still enabled'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor:
-                result ? const Color(0xFF10B981) : Colors.orange.shade700,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Text(
+              result
+                  ? 'Battery restrictions disabled'
+                  : 'Battery restrictions still enabled',
+            ),
           ),
         );
       }
@@ -459,11 +460,7 @@ class SettingsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red.shade400,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Text('Error: $e'),
           ),
         );
       }
@@ -493,18 +490,14 @@ class SettingsScreen extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(ctx); // Close dialog first
+                Navigator.pop(ctx);
                 try {
                   await AlarmService().openAppSettings();
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('❌ Error opening settings: $e'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.red.shade400,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        content: Text('Error opening settings: $e'),
                       ),
                     );
                   }
@@ -520,38 +513,49 @@ class SettingsScreen extends ConsumerWidget {
 
   void _checkAlarmStatus(BuildContext context) async {
     try {
+      final theme = Theme.of(context);
       final status = await AlarmService().getAlarmPermissionsStatus();
+      final allOk = status.values.every((v) => v);
       if (context.mounted) {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
+            backgroundColor: theme.cardColor,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text('Alarm Permissions Status',
-                style: TextStyle(fontWeight: FontWeight.w800)),
+            title: Text(
+              'Alarm Permissions Status',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _statusRow(
+                  context,
                   'Battery Restrictions',
                   status['batteryOptimizationDisabled'] ?? false,
                 ),
                 const SizedBox(height: 12),
                 _statusRow(
+                  context,
                   'Exact Alarm Permission',
                   status['canScheduleExactAlarms'] ?? false,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  status.values.every((v) => v)
-                      ? '✅ All permissions configured correctly!'
-                      : '⚠️ Some permissions need attention. Tap "Disable Battery Restrictions" or "Open App Settings" to fix.',
+                  allOk
+                      ? 'All permissions configured correctly!'
+                      : 'Some permissions need attention. Tap "Disable Battery Restrictions" or "Open App Settings" to fix.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: status.values.every((v) => v)
-                        ? Colors.green.shade700
-                        : Colors.orange.shade700,
+                    color: allOk
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.error,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -559,7 +563,10 @@ class SettingsScreen extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Close'),
+                child: Text(
+                  'Close',
+                  style: TextStyle(color: theme.colorScheme.primary),
+                ),
               ),
             ],
           ),
@@ -569,30 +576,32 @@ class SettingsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error checking status: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red.shade400,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Text('Error checking status: $e'),
           ),
         );
       }
     }
   }
 
-  Widget _statusRow(String label, bool isGranted) {
+  Widget _statusRow(BuildContext context, String label, bool isGranted) {
+    final theme = Theme.of(context);
+    final color = isGranted ? theme.colorScheme.primary : theme.colorScheme.error;
     return Row(
       children: [
         Icon(
           isGranted ? LucideIcons.checkCircle : LucideIcons.xCircle,
           size: 20,
-          color: isGranted ? Colors.green.shade600 : Colors.red.shade600,
+          color: color,
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurface.withOpacity(0.85),
+            ),
           ),
         ),
         Text(
@@ -600,7 +609,7 @@ class SettingsScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isGranted ? Colors.green.shade600 : Colors.red.shade600,
+            color: color,
           ),
         ),
       ],
