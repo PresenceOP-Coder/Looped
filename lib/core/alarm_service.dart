@@ -84,13 +84,10 @@ Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
         exact: true,
         wakeup: true,
         alarmClock: true,
-
-        
         rescheduleOnReboot: true,
       );
     }
-  } catch (e) {
-  }
+  } catch (e) {}
 }
 
 @pragma('vm:entry-point')

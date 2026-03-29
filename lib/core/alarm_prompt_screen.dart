@@ -9,7 +9,8 @@ class AlarmPromptScreen extends StatelessWidget {
   const AlarmPromptScreen({
     super.key,
     this.title = 'Stop Alarm?',
-    this.description = 'Current timer is complete.\nTap anywhere to stop the alarm.',
+    this.description =
+        'Current timer is complete.\nTap anywhere to stop the alarm.',
   });
 
   @override
@@ -103,4 +104,3 @@ class AlarmPromptScreen extends StatelessWidget {
     );
   }
 }
-

@@ -55,7 +55,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -103,9 +102,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -140,9 +137,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -184,9 +179,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -218,7 +211,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
@@ -577,7 +569,8 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _statusRow(BuildContext context, String label, bool isGranted) {
     final theme = Theme.of(context);
-    final color = isGranted ? theme.colorScheme.primary : theme.colorScheme.error;
+    final color =
+        isGranted ? theme.colorScheme.primary : theme.colorScheme.error;
     return Row(
       children: [
         Icon(

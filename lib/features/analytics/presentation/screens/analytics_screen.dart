@@ -61,25 +61,20 @@ class AnalyticsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: StatsCardsRow(),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: WeeklyBarChart(),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -165,34 +160,27 @@ class AnalyticsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: HeatmapCalendar(),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _DayOfWeekChart(data: dayOfWeek),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: StreaksLeaderboard(),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),

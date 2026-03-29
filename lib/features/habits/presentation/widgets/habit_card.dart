@@ -59,7 +59,6 @@ class HabitCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-
               GestureDetector(
                 onTap: () =>
                     ref.read(habitProvider.notifier).toggleHabit(habit.id),
@@ -93,7 +92,6 @@ class HabitCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +175,6 @@ class HabitCard extends ConsumerWidget {
                   ],
                 ),
               ),
-
               Icon(LucideIcons.chevronRight,
                   size: 18,
                   color: theme.colorScheme.onSurface.withOpacity(0.2)),

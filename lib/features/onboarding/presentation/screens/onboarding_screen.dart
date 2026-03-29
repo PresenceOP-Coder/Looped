@@ -82,7 +82,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -91,7 +90,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) => _pages[index],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 0, 32, 48),
               child: Row(

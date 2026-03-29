@@ -481,8 +481,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('${widget.habitName} completed! Great focus session.'),
+          content: Text('${widget.habitName} completed! Great focus session.'),
         ),
       );
     }
