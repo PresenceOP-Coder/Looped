@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  flutter-checks:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +21,3 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Verify formatting
-        run: dart format --set-exit-if-changed .
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test

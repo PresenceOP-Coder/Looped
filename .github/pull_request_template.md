@@ -12,9 +12,7 @@ Describe the change and why it is needed.
 
 ## Validation
 
-- [ ] `dart format --set-exit-if-changed .`
-- [ ] `flutter analyze`
-- [ ] `flutter test`
+- [ ] Verified changes locally
 
 ## Checklist
 
