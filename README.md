@@ -117,9 +117,20 @@ You can enable both from the in-app Settings screen.
 
 ## Contributing
 
-Pull requests and ideas are welcome.
-If you find a bug or want a feature, open an issue with clear reproduction steps and expected behavior.
+Contributions are welcome.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+- Bug report: use the issue template in GitHub Issues
+- Feature request: use the issue template in GitHub Issues
+- Security issue: follow [SECURITY.md](SECURITY.md) and do not post secrets publicly
 
 ## License
 
-Add your preferred license here, for example MIT.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
+
+## Community
+
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+- Support: [SUPPORT.md](SUPPORT.md)
