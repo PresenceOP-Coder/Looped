@@ -225,6 +225,16 @@ class AlarmService {
     required String habitName,
     required String timeStr,
   }) async {
+    // On Android 13/14+, exact alarms can be denied at runtime in release builds.
+    // If permission is not granted, skip scheduling to avoid silent failures.
+    final canSchedule = await canScheduleExactAlarms();
+    if (!canSchedule) {
+      final granted = await requestExactAlarmPermission();
+      if (!granted) {
+        return;
+      }
+    }
+
     final parts = timeStr.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);

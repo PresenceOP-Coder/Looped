@@ -1,4 +1,4 @@
-name: habit_flow
+name: looped
 description: A professional habit tracker built with Flutter.
 publish_to: 'none'
 version: 1.0.0+1
@@ -49,7 +49,13 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
+  web:
+    generate: true
+  windows:
+    generate: true
+  macos:
+    generate: true
   image_path: "assets/icons/looped_logo.png"

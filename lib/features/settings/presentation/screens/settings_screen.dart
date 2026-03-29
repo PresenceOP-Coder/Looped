@@ -178,16 +178,6 @@ class SettingsScreen extends ConsumerWidget {
                           subtitle: 'View current permission status',
                           onTap: () => _checkAlarmStatus(context),
                         ),
-                        Divider(height: 1, color: borderColor),
-                        _actionTile(
-                          context: context,
-                          icon: LucideIcons.bellOff,
-                          label: 'Stop Alarm Sound',
-                          subtitle: 'Stop any currently ringing alarm',
-                        onTap: () {
-                          AlarmService().stopAlarm();
-                        },
-                        ),
                       ],
                     ),
                   ],

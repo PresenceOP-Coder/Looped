@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_flow/core/notification_service.dart';
-import 'package:habit_flow/core/alarm_service.dart';
-import 'package:habit_flow/core/alarm_prompt_screen.dart';
-import 'package:habit_flow/core/theme.dart';
-import 'package:habit_flow/core/theme_provider.dart';
-import 'package:habit_flow/features/habits/presentation/screens/app_shell.dart';
-import 'package:habit_flow/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:looped/core/notification_service.dart';
+import 'package:looped/core/alarm_service.dart';
+import 'package:looped/core/alarm_prompt_screen.dart';
+import 'package:looped/core/theme.dart';
+import 'package:looped/core/theme_provider.dart';
+import 'package:looped/features/habits/presentation/screens/app_shell.dart';
+import 'package:looped/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -140,8 +140,7 @@ class _HabitFlowAppState extends ConsumerState<HabitFlowApp> {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       navigatorKey: navigatorKey,
-      home:
-          widget.showOnboarding ? const OnboardingScreen() : const AppShell(),
+      home: widget.showOnboarding ? const OnboardingScreen() : const AppShell(),
     );
   }
 }
