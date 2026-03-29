@@ -75,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     'Skip',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -103,7 +103,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       dotWidth: 8,
                       spacing: 8,
                       activeDotColor: theme.colorScheme.primary,
-                      dotColor: theme.colorScheme.onSurface.withOpacity(0.15),
+                      dotColor:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.15),
                     ),
                   ),
                   GestureDetector(
@@ -177,7 +178,7 @@ class _OnboardingPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 52, color: color),
@@ -200,7 +201,7 @@ class _OnboardingPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],

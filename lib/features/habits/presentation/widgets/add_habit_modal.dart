@@ -139,7 +139,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: Icon(LucideIcons.x,
-                        color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                   )
                 ],
               ),
@@ -150,7 +151,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 decoration: InputDecoration(
                   hintText: 'e.g., Read 20 pages',
                   hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.3)),
                   border: InputBorder.none,
                 ),
                 style: TextStyle(
@@ -166,7 +168,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 decoration: InputDecoration(
                   hintText: 'Description (optional)',
                   hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.3),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       fontSize: 14),
                   border: InputBorder.none,
                 ),
@@ -191,7 +193,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   letterSpacing: 1.5,
                 ),
               ),
@@ -257,7 +259,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   letterSpacing: 1.5,
                 ),
               ),
@@ -286,7 +288,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                                 color: _deadlineTime != null
                                     ? Colors.red.shade400
                                     : theme.colorScheme.onSurface
-                                        .withOpacity(0.3)),
+                                        .withValues(alpha: 0.3)),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -301,7 +303,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                                   color: _deadlineTime != null
                                       ? theme.colorScheme.onSurface
                                       : theme.colorScheme.onSurface
-                                          .withOpacity(0.3),
+                                          .withValues(alpha: 0.3),
                                 ),
                               ),
                             ),
@@ -316,7 +318,8 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                       onPressed: () => setState(() => _deadlineTime = null),
                       icon: Icon(LucideIcons.x,
                           size: 18,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.4)),
                     ),
                   ],
                 ],
@@ -327,7 +330,7 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
                   'Completed today. Unmark to change deadline time.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],

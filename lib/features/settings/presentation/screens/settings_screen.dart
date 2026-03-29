@@ -18,7 +18,7 @@ class SettingsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final cardColor = theme.cardColor;
     final borderColor = theme.dividerColor;
-    final subtitleColor = theme.colorScheme.onSurface.withOpacity(0.5);
+    final subtitleColor = theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -260,7 +260,7 @@ class SettingsScreen extends ConsumerWidget {
       leading: Icon(icon,
           color: isSelected
               ? theme.colorScheme.primary
-              : theme.colorScheme.onSurface.withOpacity(0.4)),
+              : theme.colorScheme.onSurface.withValues(alpha: 0.4)),
       title: Text(
         label,
         style: TextStyle(
@@ -289,7 +289,7 @@ class SettingsScreen extends ConsumerWidget {
       leading: Icon(icon,
           color: isDestructive
               ? Colors.red.shade400
-              : theme.colorScheme.onSurface.withOpacity(0.6)),
+              : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
       title: Text(
         label,
         style: TextStyle(
@@ -302,11 +302,11 @@ class SettingsScreen extends ConsumerWidget {
         subtitle,
         style: TextStyle(
           fontSize: 12,
-          color: theme.colorScheme.onSurface.withOpacity(0.4),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
         ),
       ),
       trailing: Icon(LucideIcons.chevronRight,
-          size: 18, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+          size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     );
@@ -320,7 +320,8 @@ class SettingsScreen extends ConsumerWidget {
   }) {
     final theme = Theme.of(context);
     return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+      leading:
+          Icon(icon, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
       title: Text(
         label,
         style: TextStyle(
@@ -333,7 +334,7 @@ class SettingsScreen extends ConsumerWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -411,8 +412,8 @@ class SettingsScreen extends ConsumerWidget {
               if (ctx.mounted) Navigator.pop(ctx);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('All data has been reset'),
+                  const SnackBar(
+                    content: Text('All data has been reset'),
                   ),
                 );
               }
@@ -585,7 +586,7 @@ class SettingsScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface.withOpacity(0.85),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
             ),
           ),
         ),

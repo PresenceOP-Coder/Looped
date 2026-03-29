@@ -112,7 +112,7 @@ class HabitDetailScreen extends ConsumerWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: cat.color.withOpacity(0.1),
+                        color: cat.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(22),
                       ),
                       child: Icon(cat.icon, color: cat.color, size: 32),
@@ -133,7 +133,7 @@ class HabitDetailScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: cat.color.withOpacity(0.1),
+                            color: cat.color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -152,7 +152,8 @@ class HabitDetailScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -169,14 +170,15 @@ class HabitDetailScreen extends ConsumerWidget {
                         const SizedBox(width: 12),
                         Icon(LucideIcons.calendar,
                             size: 14,
-                            color:
-                                theme.colorScheme.onSurface.withOpacity(0.4)),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.4)),
                         const SizedBox(width: 4),
                         Text(
                           'Started ${DateFormat('MMM d, yyyy').format(habit.createdAt)}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
                           ),
                         ),
                       ],
@@ -224,7 +226,8 @@ class HabitDetailScreen extends ConsumerWidget {
                         habit.description!,
                         style: TextStyle(
                           fontSize: 14,
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
                           height: 1.5,
                         ),
                       ),
@@ -277,6 +280,7 @@ class HabitDetailScreen extends ConsumerWidget {
                                 .read(habitProvider.notifier)
                                 .applyManualFreezeForYesterday(habit.id);
                             ref.invalidate(freezeRemainingProvider);
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -318,7 +322,7 @@ class HabitDetailScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -367,7 +371,7 @@ class HabitDetailScreen extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface.withOpacity(0.4),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 height: 1.3,
               ),
             ),
@@ -517,7 +521,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   letterSpacing: 1.5,
                 ),
               ),
@@ -569,7 +573,7 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
                     fontSize: 13,
                     color: isSelected
                         ? Colors.white
-                        : theme.colorScheme.onSurface.withOpacity(0.6),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 selected: isSelected,
@@ -710,7 +714,7 @@ class _CompletionCalendarState extends State<_CompletionCalendar> {
                       size: 20,
                       color: canGoNext
                           ? null
-                          : theme.colorScheme.onSurface.withOpacity(0.2)),
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.2)),
                 ),
               ],
             ),
@@ -726,7 +730,8 @@ class _CompletionCalendarState extends State<_CompletionCalendar> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface.withOpacity(0.4),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.4),
                           ),
                         ),
                       ))
@@ -757,12 +762,12 @@ class _CompletionCalendarState extends State<_CompletionCalendar> {
                     color: isCompleted
                         ? widget.accentColor
                         : isToday
-                            ? widget.accentColor.withOpacity(0.08)
+                            ? widget.accentColor.withValues(alpha: 0.08)
                             : theme.scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(10),
                     border: isToday
                         ? Border.all(
-                            color: widget.accentColor.withOpacity(0.3),
+                            color: widget.accentColor.withValues(alpha: 0.3),
                             width: 1.5,
                           )
                         : null,
@@ -779,7 +784,8 @@ class _CompletionCalendarState extends State<_CompletionCalendar> {
                             ? Colors.white
                             : isToday
                                 ? widget.accentColor
-                                : theme.colorScheme.onSurface.withOpacity(0.5),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.5),
                       ),
                     ),
                   ),

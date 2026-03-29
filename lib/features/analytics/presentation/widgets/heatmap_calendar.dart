@@ -22,7 +22,7 @@ class HeatmapCalendar extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.04),
+            color: theme.shadowColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -48,7 +48,7 @@ class HeatmapCalendar extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -80,7 +80,7 @@ class HeatmapCalendar extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
               const SizedBox(width: 4),
@@ -91,7 +91,7 @@ class HeatmapCalendar extends ConsumerWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withOpacity(opacity),
+                    color: const Color(0xFF6366F1).withValues(alpha: opacity),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 );
@@ -102,7 +102,7 @@ class HeatmapCalendar extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -138,7 +138,7 @@ class HeatmapCalendar extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withOpacity(0.4),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
           );
@@ -183,9 +183,9 @@ class _HeatmapPainter extends CustomPainter {
 
       final ratio = (count / totalHabits).clamp(0.0, 1.0);
       final color = count == 0
-          ? const Color(0xFF6366F1).withOpacity(0.06)
+          ? const Color(0xFF6366F1).withValues(alpha: 0.06)
           : Color.lerp(
-              const Color(0xFF6366F1).withOpacity(0.15),
+              const Color(0xFF6366F1).withValues(alpha: 0.15),
               const Color(0xFF6366F1),
               ratio,
             )!;

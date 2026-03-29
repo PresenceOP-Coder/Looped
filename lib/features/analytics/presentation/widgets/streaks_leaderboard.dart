@@ -19,7 +19,7 @@ class StreaksLeaderboard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.04),
+            color: theme.shadowColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -42,7 +42,7 @@ class StreaksLeaderboard extends ConsumerWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 16),
@@ -53,7 +53,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                 child: Text(
                   'No habits yet',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -78,7 +78,8 @@ class StreaksLeaderboard extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: isFirst ? 16 : 14,
                           fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.4),
                         ),
                       ),
                     ),
@@ -86,7 +87,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: cat.color.withOpacity(0.1),
+                        color: cat.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(cat.icon, size: 16, color: cat.color),
@@ -110,8 +111,8 @@ class StreaksLeaderboard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.4),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.4),
                             ),
                           ),
                         ],
@@ -122,8 +123,9 @@ class StreaksLeaderboard extends ConsumerWidget {
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: s.currentStreak > 0
-                            ? theme.colorScheme.primary.withOpacity(0.1)
-                            : theme.colorScheme.onSurface.withOpacity(0.06),
+                            ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                            : theme.colorScheme.onSurface
+                                .withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -134,7 +136,8 @@ class StreaksLeaderboard extends ConsumerWidget {
                             size: 14,
                             color: s.currentStreak > 0
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withOpacity(0.4),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -145,7 +148,7 @@ class StreaksLeaderboard extends ConsumerWidget {
                               color: s.currentStreak > 0
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.onSurface
-                                      .withOpacity(0.4),
+                                      .withValues(alpha: 0.4),
                             ),
                           ),
                         ],

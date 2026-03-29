@@ -134,7 +134,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
                 color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.25),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.25),
                   width: 4,
                 ),
               ),
@@ -166,7 +166,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
               size: 22,
               color: isSelected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.35),
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.35),
             ),
             const SizedBox(height: 4),
             Text(
@@ -176,7 +176,7 @@ class _CustomBottomBarState extends State<CustomBottomBar>
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withOpacity(0.35),
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.35),
               ),
             ),
             const SizedBox(height: 4),
@@ -256,7 +256,7 @@ class _MenuOverlay extends StatelessWidget {
                   Container(
                     height: 1,
                     margin: const EdgeInsets.symmetric(horizontal: 12),
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                   ),
                   GestureDetector(
                     onTap: onAnalytics,

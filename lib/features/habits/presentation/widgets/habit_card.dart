@@ -37,11 +37,14 @@ class HabitCard extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isDoneToday ? accentColor.withOpacity(0.05) : theme.cardColor,
+          color: isDoneToday
+              ? accentColor.withValues(alpha: 0.05)
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color:
-                isDoneToday ? accentColor.withOpacity(0.2) : theme.dividerColor,
+            color: isDoneToday
+                ? accentColor.withValues(alpha: 0.2)
+                : theme.dividerColor,
             width: 1.5,
           ),
         ),
@@ -55,7 +58,7 @@ class HabitCard extends ConsumerWidget {
                 child: Icon(
                   LucideIcons.gripVertical,
                   size: 16,
-                  color: theme.colorScheme.onSurface.withOpacity(0.2),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                 ),
               ),
               const SizedBox(width: 8),
@@ -70,12 +73,12 @@ class HabitCard extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isDoneToday
                         ? accentColor
-                        : theme.colorScheme.onSurface.withOpacity(0.05),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
                         color: isDoneToday
-                            ? accentColor.withOpacity(0.3)
+                            ? accentColor.withValues(alpha: 0.3)
                             : Colors.transparent,
                         blurRadius: isDoneToday ? 12 : 0,
                         offset: const Offset(0, 4),
@@ -86,7 +89,7 @@ class HabitCard extends ConsumerWidget {
                     isDoneToday ? LucideIcons.check : LucideIcons.circle,
                     color: isDoneToday
                         ? Colors.white
-                        : theme.colorScheme.onSurface.withOpacity(0.2),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.2),
                     size: 28,
                   ),
                 ),
@@ -102,7 +105,7 @@ class HabitCard extends ConsumerWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: isDoneToday
-                            ? theme.colorScheme.onSurface.withOpacity(0.4)
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
                             : theme.colorScheme.onSurface,
                         decoration:
                             isDoneToday ? TextDecoration.lineThrough : null,
@@ -116,7 +119,7 @@ class HabitCard extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: accentColor.withOpacity(0.1),
+                            color: accentColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -135,7 +138,8 @@ class HabitCard extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -154,7 +158,8 @@ class HabitCard extends ConsumerWidget {
                             size: 14,
                             color: streak > 0
                                 ? Colors.orange
-                                : theme.colorScheme.onSurface.withOpacity(0.2)),
+                                : theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.2)),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -165,7 +170,7 @@ class HabitCard extends ConsumerWidget {
                               color: streak > 0
                                   ? Colors.orange
                                   : theme.colorScheme.onSurface
-                                      .withOpacity(0.3),
+                                      .withValues(alpha: 0.3),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -177,7 +182,7 @@ class HabitCard extends ConsumerWidget {
               ),
               Icon(LucideIcons.chevronRight,
                   size: 18,
-                  color: theme.colorScheme.onSurface.withOpacity(0.2)),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
             ],
           ),
         ),

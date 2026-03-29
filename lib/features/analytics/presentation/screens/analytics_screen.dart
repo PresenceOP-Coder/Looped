@@ -54,7 +54,8 @@ class AnalyticsScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -91,7 +92,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.04),
+                              color: theme.shadowColor.withValues(alpha: 0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -102,7 +103,8 @@ class AnalyticsScreen extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withOpacity(0.1),
+                                color: const Color(0xFFF59E0B)
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Icon(LucideIcons.star,
@@ -125,7 +127,7 @@ class AnalyticsScreen extends ConsumerWidget {
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.4),
+                                    .withValues(alpha: 0.4),
                                 height: 1.3,
                               ),
                             ),
@@ -207,7 +209,7 @@ class _DayOfWeekChart extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.04),
+            color: theme.shadowColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -230,7 +232,7 @@ class _DayOfWeekChart extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 20),
@@ -270,7 +272,7 @@ class _DayOfWeekChart extends StatelessWidget {
                               color: isBest
                                   ? const Color(0xFF10B981)
                                   : theme.colorScheme.onSurface
-                                      .withOpacity(0.4),
+                                      .withValues(alpha: 0.4),
                             ),
                           ),
                         );
@@ -291,7 +293,7 @@ class _DayOfWeekChart extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                         color: isBest
                             ? const Color(0xFF10B981)
-                            : const Color(0xFF10B981).withOpacity(0.2),
+                            : const Color(0xFF10B981).withValues(alpha: 0.2),
                       ),
                     ],
                   );

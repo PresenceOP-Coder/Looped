@@ -18,7 +18,7 @@ class CategoryDonutChart extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.04),
+            color: theme.shadowColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -41,7 +41,7 @@ class CategoryDonutChart extends ConsumerWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 16),
@@ -52,7 +52,7 @@ class CategoryDonutChart extends ConsumerWidget {
                 child: Text(
                   'No data yet',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -85,8 +85,8 @@ class CategoryDonutChart extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.7),
                             ),
                           ),
                         ),

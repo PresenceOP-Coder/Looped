@@ -16,7 +16,7 @@ class AlarmPromptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = theme.colorScheme.primaryContainer.withOpacity(0.95);
+    final bgColor = theme.colorScheme.primaryContainer.withValues(alpha: 0.95);
     final accent = theme.colorScheme.primary;
     final onBg = theme.colorScheme.onPrimaryContainer;
     final onAccent = theme.colorScheme.onPrimary;
@@ -56,7 +56,7 @@ class AlarmPromptScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
-                      color: onBg.withOpacity(0.9),
+                      color: onBg.withValues(alpha: 0.9),
                       height: 1.4,
                       fontWeight: FontWeight.w500,
                     ),

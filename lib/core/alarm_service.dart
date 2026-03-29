@@ -87,7 +87,9 @@ Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
         rescheduleOnReboot: true,
       );
     }
-  } catch (e) {}
+  } catch (e) {
+    debugPrint('Failed to reschedule alarm for id=$id: $e');
+  }
 }
 
 @pragma('vm:entry-point')

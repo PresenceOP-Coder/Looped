@@ -143,7 +143,7 @@ class HomeScreen extends ConsumerWidget {
                             Icon(LucideIcons.sparkles,
                                 size: 64,
                                 color: theme.colorScheme.onSurface
-                                    .withOpacity(0.15)),
+                                    .withValues(alpha: 0.15)),
                             const SizedBox(height: 16),
                             Text(
                               selectedCategory != null
@@ -151,7 +151,7 @@ class HomeScreen extends ConsumerWidget {
                                   : 'Your routine is empty',
                               style: TextStyle(
                                   color: theme.colorScheme.onSurface
-                                      .withOpacity(0.4),
+                                      .withValues(alpha: 0.4),
                                   fontWeight: FontWeight.w800),
                             ),
                           ],
@@ -224,12 +224,12 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? (color ?? theme.colorScheme.primary).withOpacity(0.1)
+                ? (color ?? theme.colorScheme.primary).withValues(alpha: 0.1)
                 : theme.cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected
-                  ? (color ?? theme.colorScheme.primary).withOpacity(0.3)
+                  ? (color ?? theme.colorScheme.primary).withValues(alpha: 0.3)
                   : theme.dividerColor,
             ),
           ),
@@ -243,7 +243,7 @@ class HomeScreen extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   color: isSelected
                       ? (color ?? theme.colorScheme.primary)
-                      : theme.colorScheme.onSurface.withOpacity(0.5),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 6),
@@ -251,8 +251,9 @@ class HomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (color ?? theme.colorScheme.primary).withOpacity(0.15)
-                      : theme.colorScheme.onSurface.withOpacity(0.06),
+                      ? (color ?? theme.colorScheme.primary)
+                          .withValues(alpha: 0.15)
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -262,7 +263,7 @@ class HomeScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w800,
                     color: isSelected
                         ? (color ?? theme.colorScheme.primary)
-                        : theme.colorScheme.onSurface.withOpacity(0.4),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -291,7 +292,7 @@ class HomeScreen extends ConsumerWidget {
                 style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     letterSpacing: 1)),
             const SizedBox(height: 4),
             Text(value,
