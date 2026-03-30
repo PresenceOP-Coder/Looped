@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/alarm_service.dart';
@@ -31,10 +33,18 @@ final todayHabitsProvider = Provider<List<Habit>>((ref) {
 class HabitNotifier extends StateNotifier<List<Habit>> {
   final _box = Hive.box<Habit>(AppConstants.habitBoxName);
   final _freezeService = StreakFreezeService();
+  StreamSubscription<BoxEvent>? _boxSubscription;
 
   HabitNotifier() : super([]) {
     _loadHabits();
+    _boxSubscription = _box.watch().listen((_) => _loadHabits());
     Future.microtask(_applyAutoFreezeForYesterday);
+  }
+
+  @override
+  void dispose() {
+    _boxSubscription?.cancel();
+    super.dispose();
   }
 
   void _loadHabits() {
@@ -174,7 +184,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       deadlineTime: deadlineTime,
     );
     await _box.put(newHabit.id, newHabit);
-    state = [...state, newHabit];
+    _loadHabits();
 
     if (reminderTime != null) {
       await NotificationService().scheduleHabitReminder(
@@ -229,10 +239,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       clearDeadlineTime: effectiveClearDeadlineTime,
     );
     await _box.put(id, updatedHabit);
-    state = [
-      for (final h in state)
-        if (h.id == id) updatedHabit else h,
-    ];
+    _loadHabits();
 
     if (effectiveClearReminderTime) {
       await NotificationService().cancelReminder(id);
@@ -273,11 +280,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final updatedHabit = habit.copyWith(completedDates: updatesDates);
 
     await _box.put(id, updatedHabit);
-
-    state = [
-      for (final h in state)
-        if (h.id == id) updatedHabit else h,
-    ];
+    _loadHabits();
 
     if (habit.deadlineTime != null) {
       if (!wasCompleted) {
@@ -286,14 +289,12 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
         await AlarmService().stopAlarm();
       } else {
         await _freezeService.startRecoveryWindow(habitId: id);
-        final canRecover = await _freezeService.isRecoveryWindowActive(id);
-        if (canRecover) {
-          await AlarmService().scheduleDeadlineAlarm(
-            habitId: id,
-            habitName: habit.name,
-            timeStr: habit.deadlineTime!,
-          );
-        }
+        await AlarmService().cancelDeadlineAlarm(id);
+        await AlarmService().scheduleDeadlineAlarm(
+          habitId: id,
+          habitName: habit.name,
+          timeStr: habit.deadlineTime!,
+        );
       }
     }
 
@@ -301,23 +302,27 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
       if (!wasCompleted) {
         await NotificationService().cancelReminder(id);
       } else {
-        final canRecover = await _freezeService.isRecoveryWindowActive(id);
-        if (canRecover) {
-          await NotificationService().scheduleHabitReminder(
-            habitId: id,
-            habitName: habit.name,
-            timeStr: habit.reminderTime!,
-          );
-        }
+        await NotificationService().cancelReminder(id);
+        await NotificationService().scheduleHabitReminder(
+          habitId: id,
+          habitName: habit.name,
+          timeStr: habit.reminderTime!,
+        );
       }
     }
   }
 
   Future<void> deleteHabit(String id) async {
-    await NotificationService().cancelReminder(id);
-    await AlarmService().cancelDeadlineAlarm(id);
+    try {
+      await NotificationService().cancelReminder(id);
+    } catch (_) {}
+
+    try {
+      await AlarmService().cancelDeadlineAlarm(id);
+    } catch (_) {}
+
     await _box.delete(id);
-    state = state.where((h) => h.id != id).toList();
+    _loadHabits();
   }
 
   Future<void> reorderHabits(int oldIndex, int newIndex) async {
@@ -325,13 +330,11 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final item = items.removeAt(oldIndex);
     items.insert(newIndex, item);
 
-    final updated = <Habit>[];
     for (int i = 0; i < items.length; i++) {
       final h = items[i].copyWith(sortOrder: i);
       await _box.put(h.id, h);
-      updated.add(h);
     }
-    state = updated;
+    _loadHabits();
   }
 
   int getStreak(Habit habit) {

@@ -63,14 +63,23 @@ class HomeScreen extends ConsumerWidget {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 48,
+                          height: 48,
+                          clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
                             color: theme.cardColor,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: theme.dividerColor),
                           ),
-                          child: Icon(LucideIcons.trendingUp,
-                              color: theme.colorScheme.primary),
+                          child: Image.asset(
+                            'assets/icons/looped_logo.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              LucideIcons.sparkles,
+                              color: theme.colorScheme.primary,
+                              size: 24,
+                            ),
+                          ),
                         ),
                       ],
                     ),

@@ -8,7 +8,8 @@ import 'alarm_service.dart';
 @pragma('vm:entry-point')
 Future<void> notificationBackgroundHandler(
     NotificationResponse response) async {
-  if (response.actionId == 'STOP_ALARM') {
+  final payload = response.payload ?? '';
+  if (payload.startsWith('alarm:')) {
     await AlarmService().stopAlarm();
   }
 }
@@ -43,13 +44,17 @@ class NotificationService {
     await _plugin.initialize(
       settings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        if (response.actionId == 'STOP_ALARM') {
+        final payload = response.payload ?? '';
+        if (payload.startsWith('alarm:')) {
           await AlarmService().stopAlarm();
           return;
         }
 
-        // Default notification tap: show the alarm stop prompt.
-        AlarmService().notifyAlarmRang();
+        if (payload.startsWith('reminder:')) {
+          return;
+        }
+
+        // Unknown payloads should not open the alarm prompt.
       },
       onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
     );
@@ -140,10 +145,14 @@ class NotificationService {
     required String habitName,
     required String timeStr,
   }) async {
-    final parts = timeStr.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-    final notificationId = habitId.hashCode.abs() % 1000000;
+    final parsedTime = _tryParse24hTime(timeStr);
+    if (parsedTime == null) {
+      return;
+    }
+
+    final hour = parsedTime.$1;
+    final minute = parsedTime.$2;
+    final notificationId = _reminderNotificationId(habitId);
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
@@ -180,7 +189,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       notificationId,
-      'HabitFlow Reminder',
+      'Looped Reminder',
       'Time for: $habitName',
       scheduled,
       details,
@@ -188,15 +197,38 @@ class NotificationService {
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'reminder:$habitId',
     );
   }
 
   Future<void> cancelReminder(String habitId) async {
-    final notificationId = habitId.hashCode.abs() % 10000000;
+    final notificationId = _reminderNotificationId(habitId);
     await _plugin.cancel(notificationId);
   }
 
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
+  }
+
+  int _reminderNotificationId(String habitId) =>
+      habitId.hashCode.abs() % 1000000;
+
+  (int, int)? _tryParse24hTime(String value) {
+    final parts = value.split(':');
+    if (parts.length != 2) {
+      return null;
+    }
+
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) {
+      return null;
+    }
+
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return null;
+    }
+
+    return (hour, minute);
   }
 }

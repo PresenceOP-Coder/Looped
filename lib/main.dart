@@ -53,7 +53,7 @@ void main() async {
 
   runApp(
     ProviderScope(
-      child: HabitFlowApp(
+      child: LoopedApp(
         showOnboarding: !onboardingSeen,
         showStopAlarmPrompt: alarmRinging,
       ),
@@ -61,21 +61,21 @@ void main() async {
   );
 }
 
-class HabitFlowApp extends ConsumerStatefulWidget {
+class LoopedApp extends ConsumerStatefulWidget {
   final bool showOnboarding;
   final bool showStopAlarmPrompt;
 
-  const HabitFlowApp({
+  const LoopedApp({
     super.key,
     required this.showOnboarding,
     required this.showStopAlarmPrompt,
   });
 
   @override
-  ConsumerState<HabitFlowApp> createState() => _HabitFlowAppState();
+  ConsumerState<LoopedApp> createState() => _LoopedAppState();
 }
 
-class _HabitFlowAppState extends ConsumerState<HabitFlowApp> {
+class _LoopedAppState extends ConsumerState<LoopedApp> {
   StreamSubscription<bool>? _alarmPromptSub;
   bool _dialogOpen = false;
 

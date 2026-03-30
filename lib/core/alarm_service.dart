@@ -13,6 +13,25 @@ import 'package:permission_handler/permission_handler.dart' as permission;
 import '../features/habits/domain/habit_model.dart';
 import 'constants.dart';
 
+({int hour, int minute})? _tryParse24hTime(String value) {
+  final parts = value.split(':');
+  if (parts.length != 2) {
+    return null;
+  }
+
+  final hour = int.tryParse(parts[0]);
+  final minute = int.tryParse(parts[1]);
+  if (hour == null || minute == null) {
+    return null;
+  }
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  return (hour: hour, minute: minute);
+}
+
 Future<void> _showAlarmNotification(
     String habitName, int notificationId) async {
   final plugin = FlutterLocalNotificationsPlugin();
@@ -20,12 +39,6 @@ Future<void> _showAlarmNotification(
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
   const settings = InitializationSettings(android: androidSettings);
   await plugin.initialize(settings);
-
-  const stopAction = AndroidNotificationAction(
-    'STOP_ALARM',
-    'Stop alarm',
-    showsUserInterface: false,
-  );
 
   const androidDetails = AndroidNotificationDetails(
     'habit_alarm_channel',
@@ -42,18 +55,58 @@ Future<void> _showAlarmNotification(
     autoCancel: false,
     icon: '@mipmap/ic_launcher',
     timeoutAfter: 60000,
-    actions: [stopAction],
   );
 
   const details = NotificationDetails(android: androidDetails);
 
   await plugin.show(
     notificationId,
-    'HabitFlow Alarm',
+    'Looped Alarm',
     'Deadline reached for: $habitName',
     details,
-    payload: habitName,
+    payload: 'alarm:$habitName',
   );
+}
+
+Future<bool> _scheduleOneShotWithFallback({
+  required DateTime scheduled,
+  required int id,
+  bool preferExact = true,
+}) async {
+  if (preferExact) {
+    try {
+      final exactOk = await AndroidAlarmManager.oneShotAt(
+        scheduled,
+        id,
+        alarmCallback,
+        exact: true,
+        wakeup: true,
+        alarmClock: true,
+        rescheduleOnReboot: true,
+      );
+      if (exactOk) {
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Exact alarm schedule failed for id=$id: $e');
+    }
+  }
+
+  try {
+    final inexactOk = await AndroidAlarmManager.oneShotAt(
+      scheduled,
+      id,
+      alarmCallback,
+      exact: false,
+      wakeup: true,
+      alarmClock: false,
+      rescheduleOnReboot: true,
+    );
+    return inexactOk;
+  } catch (e) {
+    debugPrint('Inexact alarm schedule failed for id=$id: $e');
+    return false;
+  }
 }
 
 Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
@@ -68,24 +121,29 @@ Future<void> _rescheduleAlarmForTomorrow(int id, int expectedGen) async {
     final deadlineTime = prefs.getString('alarm_deadline_time_$id');
     final habitId = prefs.getString('alarm_habit_id_$id');
     final habitName = prefs.getString('alarm_habit_name_$id');
+    final parsedTime =
+        deadlineTime == null ? null : _tryParse24hTime(deadlineTime);
 
-    if (deadlineTime != null && habitId != null && habitName != null) {
-      final parts = deadlineTime.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
+    if (parsedTime != null && habitId != null && habitName != null) {
       final tomorrow = DateTime.now().add(const Duration(days: 1));
-      final nextAlarm =
-          DateTime(tomorrow.year, tomorrow.month, tomorrow.day, hour, minute);
-
-      await AndroidAlarmManager.oneShotAt(
-        nextAlarm,
-        id,
-        alarmCallback,
-        exact: true,
-        wakeup: true,
-        alarmClock: true,
-        rescheduleOnReboot: true,
+      final nextAlarm = DateTime(
+        tomorrow.year,
+        tomorrow.month,
+        tomorrow.day,
+        parsedTime.hour,
+        parsedTime.minute,
       );
+
+      final ok = await _scheduleOneShotWithFallback(
+        scheduled: nextAlarm,
+        id: id,
+      );
+      if (!ok) {
+        debugPrint('Could not reschedule alarm for tomorrow, id=$id');
+      }
+    } else {
+      debugPrint(
+          'Skipped reschedule for id=$id due to missing/invalid alarm data');
     }
   } catch (e) {
     debugPrint('Failed to reschedule alarm for id=$id: $e');
@@ -141,7 +199,7 @@ Future<void> alarmCallback(int id) async {
             asAlarm: true,
           );
 
-          // Stop early if the user taps “Stop alarm” (which flips `alarm_ringing`).
+          // Stop early when alarm_ringing is flipped by the app prompt.
           final end = DateTime.now().add(const Duration(seconds: 90));
           while (DateTime.now().isBefore(end)) {
             // Important: another isolate might update SharedPreferences.
@@ -224,27 +282,33 @@ class AlarmService {
     required String habitName,
     required String timeStr,
   }) async {
-    // On Android 13/14+, exact alarms can be denied at runtime in release builds.
-    // If permission is not granted, skip scheduling to avoid silent failures.
+    // Even if exact alarm permission is denied, we still try inexact fallback.
     final canSchedule = await canScheduleExactAlarms();
-    if (!canSchedule) {
+    var preferExact = canSchedule;
+    if (!preferExact) {
       final granted = await requestExactAlarmPermission();
-      if (!granted) {
-        return;
-      }
+      preferExact = granted;
     }
 
-    final parts = timeStr.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
+    final parsedTime = _tryParse24hTime(timeStr);
+    if (parsedTime == null) {
+      return;
+    }
+
+    final hour = parsedTime.hour;
+    final minute = parsedTime.minute;
 
     final now = DateTime.now();
     var scheduled = DateTime(now.year, now.month, now.day, hour, minute);
 
-    if (scheduled.isBefore(now)) {
+    if (!scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     final id = alarmId(habitId);
+
+    // Always clear any existing alarm before scheduling a fresh one.
+    await AndroidAlarmManager.cancel(legacyAlarmId(habitId));
+    await AndroidAlarmManager.cancel(id);
 
     final prefs = await SharedPreferences.getInstance();
     final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
@@ -254,15 +318,14 @@ class AlarmService {
     await prefs.setString('alarm_habit_name_$id', habitName);
     await prefs.setString('alarm_deadline_time_$id', timeStr);
 
-    await AndroidAlarmManager.oneShotAt(
-      scheduled,
-      id,
-      alarmCallback,
-      exact: true,
-      wakeup: true,
-      alarmClock: true,
-      rescheduleOnReboot: true,
+    final ok = await _scheduleOneShotWithFallback(
+      scheduled: scheduled,
+      id: id,
+      preferExact: preferExact,
     );
+    if (!ok) {
+      debugPrint('Could not schedule deadline alarm for habitId=$habitId');
+    }
   }
 
   Future<void> cancelDeadlineAlarm(String habitId) async {
@@ -276,6 +339,9 @@ class AlarmService {
     final prefs = await SharedPreferences.getInstance();
     final newGen = (prefs.getInt('alarm_gen_$id') ?? 0) + 1;
     await prefs.setInt('alarm_gen_$id', newGen);
+    await prefs.remove('alarm_habit_id_$id');
+    await prefs.remove('alarm_habit_name_$id');
+    await prefs.remove('alarm_deadline_time_$id');
   }
 
   Future<void> rescheduleAllDeadlineAlarms(List<Habit> habits) async {
