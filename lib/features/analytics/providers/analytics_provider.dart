@@ -84,18 +84,22 @@ final analyticsStatsProvider = Provider<AnalyticsStats>((ref) {
     );
   }
 
+  // Count only actual completions (not freezes) for metrics
   final totalCompletions =
       habits.fold<int>(0, (sum, h) => sum + h.completedDates.length);
 
+  // Include both completions and freezes for perfect days calculation
   final allDates = <String>{};
   for (final h in habits) {
     allDates.addAll(h.completedDates);
+    allDates.addAll(h.freezeDates);
   }
 
   int perfectDays = 0;
   for (final date in allDates) {
-    final allDone = habits.every((h) => h.completedDates.contains(date));
-    if (allDone) perfectDays++;
+    final completedOrFrozen = habits.every(
+        (h) => h.completedDates.contains(date) || h.freezeDates.contains(date));
+    if (completedOrFrozen) perfectDays++;
   }
 
   int longestStreak = 0;
@@ -126,8 +130,12 @@ final weeklyCompletionsProvider = Provider<List<DayCompletion>>((ref) {
   return List.generate(7, (i) {
     final date = now.subtract(Duration(days: 6 - i));
     final dateStr = date.toIso8601String().split('T')[0];
-    final count =
-        habits.where((h) => h.completedDates.contains(dateStr)).length;
+    // Count habits completed or frozen on this date
+    final count = habits
+        .where((h) =>
+            h.completedDates.contains(dateStr) ||
+            h.freezeDates.contains(dateStr))
+        .length;
     return DayCompletion(
       date: date,
       count: count,
@@ -188,7 +196,14 @@ final dayOfWeekStatsProvider = Provider<List<DayOfWeekStat>>((ref) {
   };
 
   for (final h in habits) {
+    // Count both completions and freezes
     for (final dateStr in h.completedDates) {
+      final date = DateTime.tryParse(dateStr);
+      if (date != null) {
+        dayCounts[date.weekday] = dayCounts[date.weekday]! + 1;
+      }
+    }
+    for (final dateStr in h.freezeDates) {
       final date = DateTime.tryParse(dateStr);
       if (date != null) {
         dayCounts[date.weekday] = dayCounts[date.weekday]! + 1;
@@ -226,8 +241,12 @@ final heatmapDataProvider = Provider<Map<String, int>>((ref) {
   for (int i = 0; i < 90; i++) {
     final date = now.subtract(Duration(days: 89 - i));
     final dateStr = date.toIso8601String().split('T')[0];
-    final count =
-        habits.where((h) => h.completedDates.contains(dateStr)).length;
+    // Count habits completed or frozen on this date
+    final count = habits
+        .where((h) =>
+            h.completedDates.contains(dateStr) ||
+            h.freezeDates.contains(dateStr))
+        .length;
     heatmap[dateStr] = count;
   }
 

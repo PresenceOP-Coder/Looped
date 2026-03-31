@@ -29,7 +29,7 @@ class NotificationService {
     await _configureLocalTimezone();
 
     const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -173,7 +173,7 @@ class NotificationService {
       channelDescription: 'Daily reminders for your habits',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_notification',
     );
 
     const iosDetails = DarwinNotificationDetails(

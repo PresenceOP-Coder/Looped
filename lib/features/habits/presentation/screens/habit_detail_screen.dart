@@ -259,6 +259,34 @@ class HabitDetailScreen extends ConsumerWidget {
                   child: OutlinedButton.icon(
                     onPressed: freezeRemaining > 0
                         ? () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                title: const Text(
+                                  'Use Streak Freeze?',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                content: const Text(
+                                  'Freeze can only be applied if you completed the habit the day before yesterday (to preserve an actual streak). After using a freeze, you must complete the habit for 7 consecutive days before using another.',
+                                  style: TextStyle(height: 1.5),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Use Freeze'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm != true) return;
+                            if (!context.mounted) return;
                             final applied = await ref
                                 .read(habitProvider.notifier)
                                 .applyManualFreezeForYesterday(habit.id);
@@ -314,6 +342,7 @@ class HabitDetailScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: _CompletionCalendar(
                 completedDates: habit.completedDates,
+                frozenDates: habit.freezeDates,
                 accentColor: cat.color,
               ),
             ),
@@ -683,10 +712,12 @@ class _FocusTimerState extends ConsumerState<_FocusTimer> {
 
 class _CompletionCalendar extends StatefulWidget {
   final List<String> completedDates;
+  final List<String> frozenDates;
   final Color accentColor;
 
   const _CompletionCalendar({
     required this.completedDates,
+    required this.frozenDates,
     required this.accentColor,
   });
 
@@ -803,38 +834,65 @@ class _CompletionCalendarState extends State<_CompletionCalendar> {
                   DateTime(_currentMonth.year, _currentMonth.month, day),
                 );
                 final isCompleted = completedSet.contains(dateStr);
+                final isFrozen = widget.frozenDates.contains(dateStr);
                 final isToday = isCurrentMonth && day == today.day;
 
                 return Container(
                   decoration: BoxDecoration(
                     color: isCompleted
                         ? widget.accentColor
-                        : isToday
-                            ? widget.accentColor.withValues(alpha: 0.08)
-                            : theme.scaffoldBackgroundColor,
+                        : isFrozen
+                            ? widget.accentColor.withValues(alpha: 0.24)
+                            : isToday
+                                ? widget.accentColor.withValues(alpha: 0.08)
+                                : theme.scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(10),
-                    border: isToday
+                    border: isFrozen
                         ? Border.all(
-                            color: widget.accentColor.withValues(alpha: 0.3),
+                            color: widget.accentColor.withValues(alpha: 0.5),
                             width: 1.5,
+                            style: BorderStyle.solid,
                           )
-                        : null,
+                        : isToday
+                            ? Border.all(
+                                color:
+                                    widget.accentColor.withValues(alpha: 0.3),
+                                width: 1.5,
+                              )
+                            : null,
                   ),
                   child: Center(
-                    child: Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isCompleted || isToday
-                            ? FontWeight.w800
-                            : FontWeight.w500,
-                        color: isCompleted
-                            ? Colors.white
-                            : isToday
-                                ? widget.accentColor
-                                : theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.5),
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        if (isFrozen)
+                          const Text(
+                            '❄️',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              '$day',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isCompleted || isFrozen || isToday
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                                color: isCompleted
+                                    ? Colors.white
+                                    : isFrozen
+                                        ? widget.accentColor
+                                            .withValues(alpha: 0.7)
+                                        : isToday
+                                            ? widget.accentColor
+                                            : theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );

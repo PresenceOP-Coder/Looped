@@ -173,6 +173,43 @@ class HomeScreen extends ConsumerWidget {
                         return Dismissible(
                           key: Key('dismiss_${habit.id}'),
                           direction: DismissDirection.endToStart,
+                          confirmDismiss: (direction) async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                title: const Text(
+                                  'Delete Habit',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                content: Text(
+                                  'Are you sure you want to delete "${habit.name}"?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: Colors.red.shade400,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return confirmed ?? false;
+                          },
                           onDismissed: (direction) {
                             ref
                                 .read(habitProvider.notifier)

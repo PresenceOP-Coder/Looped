@@ -46,6 +46,11 @@ class StreakFreezeService {
     final dateStr = _dateKey(date);
     final entry = '$habitId|$dateStr';
 
+    // Check if recovery window is active
+    if (await isRecoveryWindowActive(habitId)) {
+      return false;
+    }
+
     final entries = List<String>.from(prefs.getStringList(entriesKey) ?? []);
     if (entries.contains(entry)) {
       return false;
@@ -59,6 +64,13 @@ class StreakFreezeService {
     entries.add(entry);
     await prefs.setStringList(entriesKey, entries);
     await prefs.setInt(usedKey, used + 1);
+
+    // Start recovery window: must achieve 7 consecutive completions before next freeze
+    await startRecoveryWindow(
+      habitId: habitId,
+      duration: const Duration(days: 30),
+    );
+
     return true;
   }
 

@@ -36,7 +36,8 @@ Future<void> _showAlarmNotification(
     String habitName, int notificationId) async {
   final plugin = FlutterLocalNotificationsPlugin();
 
-  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const androidSettings =
+      AndroidInitializationSettings('@drawable/ic_notification');
   const settings = InitializationSettings(android: androidSettings);
   await plugin.initialize(settings);
 
@@ -53,7 +54,7 @@ Future<void> _showAlarmNotification(
     enableVibration: true,
     ongoing: true,
     autoCancel: false,
-    icon: '@mipmap/ic_launcher',
+    icon: '@drawable/ic_notification',
     timeoutAfter: 60000,
   );
 

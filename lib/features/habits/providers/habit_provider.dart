@@ -131,6 +131,7 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     final habit = state.firstWhere((h) => h.id == habitId);
     final yesterday =
         _dateOnly(DateTime.now().subtract(const Duration(days: 1)));
+    final dayBeforeStr = _dateStr(yesterday.subtract(const Duration(days: 1)));
     final yesterdayStr = _dateStr(yesterday);
 
     if (!_isScheduledOnDate(habit, yesterday)) {
@@ -138,6 +139,13 @@ class HabitNotifier extends StateNotifier<List<Habit>> {
     }
 
     if (_effectiveDoneDates(habit).contains(yesterdayStr)) {
+      return false;
+    }
+
+    // Freeze can only be applied if day-before-yesterday was completed
+    // (i.e., there's an actual streak to preserve)
+    final doneDates = _effectiveDoneDates(habit);
+    if (!doneDates.contains(dayBeforeStr)) {
       return false;
     }
 
