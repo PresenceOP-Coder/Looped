@@ -62,40 +62,40 @@ class HabitDetailScreen extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrowLeft),
-                      style: IconButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    Row(
+                      children: [
+                        _headerAction(
+                          context: context,
+                          icon: LucideIcons.arrowLeft,
+                          onTap: () => Navigator.pop(context),
                         ),
-                      ),
+                        const Spacer(),
+                        _headerAction(
+                          context: context,
+                          icon: LucideIcons.pencil,
+                          onTap: () => _showEditModal(context, habit),
+                        ),
+                        const SizedBox(width: 8),
+                        _headerAction(
+                          context: context,
+                          icon: LucideIcons.trash2,
+                          iconColor: Colors.red.shade400,
+                          onTap: () => _confirmDelete(context, ref, habit),
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => _showEditModal(context, habit),
-                      icon: const Icon(LucideIcons.pencil, size: 20),
-                      style: IconButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => _confirmDelete(context, ref, habit),
-                      icon: Icon(LucideIcons.trash2,
-                          size: 20, color: Colors.red.shade400),
-                      style: IconButton.styleFrom(
-                        backgroundColor: theme.cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'HABIT DETAILS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.primary,
+                        letterSpacing: 1.5,
                       ),
                     ),
                   ],
@@ -104,167 +104,150 @@ class HabitDetailScreen extends ConsumerWidget {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: cat.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: Icon(cat.icon, color: cat.color, size: 32),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      habit.name,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: cat.color.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            habit.category.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: cat.color,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        if (frequencyLabel != null) ...[
-                          const SizedBox(width: 8),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              color: cat.color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(22),
                             ),
-                            child: Text(
-                              frequencyLabel,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
-                                letterSpacing: 0.5,
-                              ),
+                            child: Icon(cat.icon, color: cat.color, size: 32),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  habit.name,
+                                  style: TextStyle(
+                                    fontSize: 27,
+                                    fontWeight: FontWeight.w900,
+                                    color: theme.colorScheme.onSurface,
+                                    height: 1.05,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Started ${DateFormat('MMM d, yyyy').format(habit.createdAt)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.45),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                        const SizedBox(width: 12),
-                        Icon(LucideIcons.calendar,
-                            size: 14,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.4)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Started ${DateFormat('MMM d, yyyy').format(habit.createdAt)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _detailChip(
+                            context: context,
+                            icon: LucideIcons.layers,
+                            text: habit.category.toUpperCase(),
+                            tint: cat.color,
+                          ),
+                          if (frequencyLabel != null)
+                            _detailChip(
+                              context: context,
+                              icon: LucideIcons.repeat,
+                              text: frequencyLabel,
+                              tint: theme.colorScheme.primary,
+                            ),
+                          if (habit.reminderTime != null)
+                            _detailChip(
+                              context: context,
+                              icon: LucideIcons.bell,
+                              text: 'Reminder ${habit.reminderTime}',
+                              tint: theme.colorScheme.primary,
+                            ),
+                          if (habit.deadlineTime != null)
+                            _detailChip(
+                              context: context,
+                              icon: LucideIcons.alarmClock,
+                              text: 'Deadline ${habit.deadlineTime}',
+                              tint: Colors.red.shade400,
+                            ),
+                        ],
+                      ),
+                      if (habit.description != null &&
+                          habit.description!.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: theme.scaffoldBackgroundColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Text(
+                            habit.description!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.65),
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    if (habit.reminderTime != null) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(LucideIcons.bell,
-                              size: 14, color: theme.colorScheme.primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Reminder at ${habit.reminderTime}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
-                    if (habit.deadlineTime != null) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(LucideIcons.alarmClock,
-                              size: 14, color: Colors.red.shade400),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Deadline alarm at ${habit.deadlineTime}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red.shade400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (habit.description != null &&
-                        habit.description!.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        habit.description!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: [
-                    _buildStatCard(
-                      context,
-                      'Current\nStreak',
-                      '$streak',
-                      LucideIcons.flame,
-                      const Color(0xFFF59E0B),
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      context,
-                      'Best\nStreak',
-                      '$bestStreak',
-                      LucideIcons.trophy,
-                      const Color(0xFF10B981),
-                    ),
-                    const SizedBox(width: 12),
-                    _buildStatCard(
-                      context,
-                      'Total\nDone',
-                      '$totalCompletions',
-                      LucideIcons.checkCircle,
-                      const Color(0xFF6366F1),
-                    ),
-                  ],
+                child: SizedBox(
+                  height: 146,
+                  child: Row(
+                    children: [
+                      _buildStatCard(
+                        context,
+                        'Current Streak',
+                        '$streak',
+                        LucideIcons.flame,
+                        const Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        context,
+                        'Best Streak',
+                        '$bestStreak',
+                        LucideIcons.trophy,
+                        const Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        context,
+                        'Total Done',
+                        '$totalCompletions',
+                        LucideIcons.checkCircle,
+                        const Color(0xFF6366F1),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -346,16 +329,24 @@ class HabitDetailScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: theme.cardColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const Spacer(),
             Text(
               value,
               style: TextStyle(
@@ -364,18 +355,75 @@ class HabitDetailScreen extends ConsumerWidget {
                 color: color,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
-              label,
-              textAlign: TextAlign.center,
+              label.toUpperCase(),
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                height: 1.3,
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.42),
+                letterSpacing: 0.9,
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _detailChip({
+    required BuildContext context,
+    required IconData icon,
+    required String text,
+    required Color tint,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tint.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: tint),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: tint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerAction({
+    required BuildContext context,
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? iconColor,
+  }) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: iconColor ?? theme.colorScheme.onSurface,
         ),
       ),
     );

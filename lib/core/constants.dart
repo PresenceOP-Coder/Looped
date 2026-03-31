@@ -25,6 +25,10 @@ class AppConstants {
         name: 'Mindset', color: Color(0xFF8B5CF6), icon: LucideIcons.brain),
     HabitCategory(
         name: 'Work', color: Color(0xFF3B82F6), icon: LucideIcons.briefcase),
+    HabitCategory(
+        name: 'Art', color: Color(0xFFEC4899), icon: LucideIcons.palette),
+    HabitCategory(
+        name: 'Social', color: Color(0xFF06B6D4), icon: LucideIcons.users),
   ];
 
   static const HabitCategory _defaultCategory = HabitCategory(

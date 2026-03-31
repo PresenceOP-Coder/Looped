@@ -131,244 +131,390 @@ class _AddHabitModalState extends ConsumerState<AddHabitModal> {
     final theme = Theme.of(context);
     final isTimeLocked =
         _isEditing && (widget.existingHabit?.isCompletedToday() ?? false);
+    final primary = theme.colorScheme.primary;
+    final onSurface = theme.colorScheme.onSurface;
+    final dim = onSurface.withValues(alpha: 0.45);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 36,
+              offset: const Offset(0, -10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     _isEditing ? 'Edit Habit' : 'New Habit',
                     style: TextStyle(
+                      color: onSurface,
                       fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   IconButton(
+                    icon: Icon(LucideIcons.x, color: dim),
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(LucideIcons.x,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                  )
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _nameController,
-                autofocus: !_isEditing,
-                decoration: InputDecoration(
-                  hintText: 'e.g., Read 20 pages',
-                  hintStyle: TextStyle(
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-                  border: InputBorder.none,
-                ),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _descriptionController,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  hintText: 'Description (optional)',
-                  hintStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                      fontSize: 14),
-                  border: InputBorder.none,
-                ),
-                style:
-                    TextStyle(fontSize: 14, color: theme.colorScheme.onSurface),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                children: AppConstants.categoryNames
-                    .map((cat) => ChoiceChip(
-                          label: Text(cat),
-                          selected: _selectedCategory == cat,
-                          onSelected: (val) =>
-                              setState(() => _selectedCategory = cat),
-                        ))
-                    .toList(),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'FREQUENCY',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: ['daily', 'weekly', 'custom'].map((f) {
-                  final isSelected = _frequency == f;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(
-                        f[0].toUpperCase() + f.substring(1),
-                        style: TextStyle(
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      autofocus: !_isEditing,
+                      style: TextStyle(
+                        color: onSurface,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g., Read 20 pages',
+                        hintStyle: TextStyle(color: dim, fontSize: 24),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: theme.dividerColor),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: primary, width: 1.5),
                         ),
                       ),
-                      selected: isSelected,
-                      onSelected: (_) {
-                        setState(() {
-                          _frequency = f;
-                          if (f == 'daily') _targetDays.clear();
-                        });
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _descriptionController,
+                      maxLines: 2,
+                      style: TextStyle(color: dim, fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: 'Description (optional)',
+                        hintStyle: TextStyle(color: dim.withValues(alpha: 0.9)),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                    _sectionLabel(context, 'Category'),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: AppConstants.categories.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 2.45,
+                      ),
+                      itemBuilder: (context, index) {
+                        final cat = AppConstants.categories[index];
+                        final isActive = _selectedCategory == cat.name;
+                        return _habitChip(
+                          label: cat.name,
+                          accent: cat.color,
+                          isActive: isActive,
+                          onTap: () =>
+                              setState(() => _selectedCategory = cat.name),
+                        );
                       },
                     ),
-                  );
-                }).toList(),
-              ),
-              if (_frequency == 'weekly' || _frequency == 'custom') ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  children: List.generate(7, (i) {
-                    final day = i + 1;
-                    final isSelected = _targetDays.contains(day);
-                    return FilterChip(
-                      label: Text(
-                        _dayLabels[i],
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
-                        ),
+                    _sectionLabel(context, 'Frequency'),
+                    Row(
+                      children: List.generate(3, (index) {
+                        final f = ['daily', 'weekly', 'custom'][index];
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
+                            child: _frequencyChip(
+                              label: f[0].toUpperCase() + f.substring(1),
+                              isActive: _frequency == f,
+                              onTap: () {
+                                setState(() {
+                                  _frequency = f;
+                                  if (f == 'daily') _targetDays.clear();
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    if (_frequency == 'weekly' || _frequency == 'custom') ...[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 6,
+                        children: List.generate(7, (i) {
+                          final day = i + 1;
+                          final isSelected = _targetDays.contains(day);
+                          return FilterChip(
+                            label: Text(
+                              _dayLabels[i],
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                            selected: isSelected,
+                            selectedColor: primary.withValues(alpha: 0.14),
+                            checkmarkColor: primary,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? primary.withValues(alpha: 0.45)
+                                  : theme.dividerColor,
+                            ),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _targetDays.add(day);
+                                } else {
+                                  _targetDays.remove(day);
+                                }
+                                _targetDays.sort();
+                              });
+                            },
+                          );
+                        }),
                       ),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _targetDays.add(day);
-                          } else {
-                            _targetDays.remove(day);
-                          }
-                          _targetDays.sort();
-                        });
-                      },
-                    );
-                  }),
-                ),
-              ],
-              const SizedBox(height: 20),
-              Text(
-                'DEADLINE ALARM',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
+                    ],
+                    _sectionLabel(context, 'Deadline Alarm'),
+                    GestureDetector(
                       onTap: isTimeLocked ? null : _pickDeadlineTime,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: theme.scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: _deadlineTime != null
                                 ? Colors.red.shade300
                                 : theme.dividerColor,
                           ),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            Icon(LucideIcons.alarmClock,
-                                size: 18,
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: onSurface.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                LucideIcons.alarmClock,
                                 color: _deadlineTime != null
                                     ? Colors.red.shade400
-                                    : theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.3)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _deadlineTime != null
-                                    ? 'Alarm at $_deadlineTime if not done'
-                                    : 'Set deadline alarm (optional)',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: _deadlineTime != null
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: _deadlineTime != null
-                                      ? theme.colorScheme.onSurface
-                                      : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.3),
-                                ),
+                                    : dim,
+                                size: 20,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _deadlineTime != null
+                                        ? 'Alarm at $_deadlineTime'
+                                        : 'Set deadline alarm',
+                                    style: TextStyle(
+                                      color: _deadlineTime != null
+                                          ? onSurface
+                                          : dim,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    isTimeLocked
+                                        ? 'Completed today. Unmark to change.'
+                                        : 'Alarm rings if habit is not completed',
+                                    style: TextStyle(
+                                      color: dim.withValues(alpha: 0.8),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_deadlineTime != null && !isTimeLocked)
+                              IconButton(
+                                onPressed: () =>
+                                    setState(() => _deadlineTime = null),
+                                icon: Icon(LucideIcons.x, color: dim, size: 18),
+                              )
+                            else
+                              Icon(LucideIcons.chevronRight,
+                                  color: dim, size: 18),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                  if (_deadlineTime != null && !isTimeLocked) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => setState(() => _deadlineTime = null),
-                      icon: Icon(LucideIcons.x,
-                          size: 18,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.4)),
-                    ),
+                    const SizedBox(height: 120),
                   ],
-                ],
+                ),
               ),
-              if (isTimeLocked) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Completed today. Unmark to change deadline time.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 8,
+                      shadowColor: primary.withValues(alpha: 0.25),
+                    ),
+                    child: Text(
+                      _isEditing ? 'Save Changes' : 'Create Habit',
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 30, bottom: 12),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _habitChip({
+    required String label,
+    required Color accent,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isActive
+              ? accent.withValues(alpha: 0.16)
+              : theme.scaffoldBackgroundColor,
+          border: Border.all(
+            color: isActive ? accent : theme.dividerColor,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isActive) ...[
+                Icon(LucideIcons.check, color: accent, size: 14),
+                const SizedBox(width: 4),
               ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive ? accent : theme.colorScheme.onSurface,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: Text(
-                    _isEditing ? 'Save Changes' : 'Create Habit',
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _frequencyChip({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final textColor = theme.colorScheme.onSurface;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 52,
+        decoration: BoxDecoration(
+          color: isActive
+              ? accent.withValues(alpha: 0.18)
+              : theme.scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color:
+                isActive ? accent.withValues(alpha: 0.75) : theme.dividerColor,
+            width: 1.2,
+          ),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isActive) ...[
+                Icon(LucideIcons.check, size: 14, color: accent),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? accent : textColor.withValues(alpha: 0.85),
                 ),
               ),
             ],
